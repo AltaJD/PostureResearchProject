@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 
 def strip_columns(data: pd.DataFrame) -> None:
@@ -20,9 +19,12 @@ def exclude_errors(df: pd.DataFrame) -> pd.DataFrame:
     # define range of appropriate range of values
     lr = 650  # low range
     hr = 900  # high range
-    # skip rows containing the values not in the range
+    # Exclude rows with values outside the range
+    filtered_df = df[
+        (df[columns[0]].between(lr, hr)) &
+        (df[columns[1]].between(lr, hr)) &
+        (df[columns[2]].between(lr, hr))
+    ]
+
     print("Error rows were excluded")
-    return df[np.logical_and(df[columns[0]] > lr, df[columns[0]] < hr) |
-            np.logical_and(df[columns[1]] > lr, df[columns[1]] < hr) |
-            np.logical_and(df[columns[1]] > lr, df[columns[1]] < hr)
-            ]
+    return filtered_df
