@@ -1,8 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-columns_to_compress = ["Sensor 2", "Sensor 1", "Sensor 3"]
-save_file_path      = "data_storage/images/default.png"
+columns_to_compress = ["Sensor 2-3", "Sensor 2-1"]
+save_file_path = "data_storage/images/default.png"
+fig_height = 10  # inches
+fig_width = 20  # inches
 
 
 def show_subplots(data: dict, title: str) -> None:
@@ -18,7 +20,7 @@ def show_subplots(data: dict, title: str) -> None:
             axe.set_xlabel("Number of values")
             axe.set_title(subplot_title)
 
-    fig, axs = plt.subplots(nrows=len(data))
+    fig, axs = plt.subplots(nrows=len(data), figsize=(fig_width, fig_height))
     fig.suptitle(title)
     if len(data) > 1:
         for i, key in enumerate(data):
@@ -55,7 +57,6 @@ def get_compressed_data(df: pd.DataFrame, group_column: str) -> dict:
     result = {}
     grouped_df = df.groupby(group_column)
     for group_name, data_frame in grouped_df:
-        # print(str(group_name))
         grouped_values = grouped_df.get_group(group_name)
         result[str(group_name)] = compress_sensors_data(grouped_values, columns=columns_to_compress)
     return result
@@ -83,6 +84,8 @@ def describe_sensors_values(df_original: pd.DataFrame) -> None:
     cleaned_data = [filtered_list(values) for values in data]
     cleaned_data_lengths = get_lengths(sensors_values=cleaned_data)
     sensor_id = 1
+    total_values_valid = 0
+    total_values_removed = 0
     # Show the percentage of valid values
     for original_length, cleaned_length in zip(orig_data_lengths, cleaned_data_lengths):
         accuracy = round(cleaned_length/original_length*100, 2)
@@ -91,6 +94,8 @@ def describe_sensors_values(df_original: pd.DataFrame) -> None:
               f"Invalid values: {original_length-cleaned_length}\t"
               f"Total values: {original_length}")
         sensor_id += 1
+        total_values_valid += cleaned_length
+        total_values_removed += original_length - cleaned_length
 
 
 def find_correlations(df: pd.DataFrame, col1: str, col2: str) -> None:

@@ -52,6 +52,5 @@ def exclude_errors(df: pd.DataFrame) -> pd.DataFrame:
         (df[columns[1]].between(lr, hr)) &
         (df[columns[2]].between(lr, hr))
     ]
-
     print("Error rows were excluded")
     return filtered_df

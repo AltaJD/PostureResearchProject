@@ -13,10 +13,18 @@ if __name__ == '__main__':
     dp.describe_sensors_values(df_original)
     dataframes = dc.split_per_person(df=df_original, num_splits=5)
 
-    size_data = dp.get_compressed_data(dc.exclude_errors(df_original), group_column=f"Size")
-    dp.show_subplots(data=size_data, title=f"Shoulder Size vs Sensors")
+    df_cleaned = dc.exclude_errors(df_original)
+    print("Total VALID rows:\t", df_cleaned.shape[0])
+    print("Total INVALID rows:\t", df_original.shape[0]-df_cleaned.shape[0])
+
+    size_data = dp.get_compressed_data(df_cleaned, group_column=f"Size")
+    dp.show_subplots(data=size_data, title=f"Shoulder Size vs Sensors (Sensor Values Difference)")
+
+    dp.find_correlations(df_cleaned, col1="Width of shoulders", col2="Sensor 1")
+    dp.find_correlations(df_cleaned, col1="Width of shoulders", col2="Sensor 3")
 
     for i, df in enumerate(dataframes):
+        print(f"Subject {i+1}")
         df = dc.exclude_errors(df)
         """ Process data """
         dp.find_correlations(df, col1="Sensor 2", col2="Sensor 1")
@@ -26,8 +34,8 @@ if __name__ == '__main__':
         head_data     = dp.get_compressed_data(df, group_column=f"Head Posture")
         shoulder_data = dp.get_compressed_data(df, group_column=f"Shoulder Posture")
 
-        dp.show_subplots(data=head_data, title=f"Head Positions (Subject {i+1})")
-        dp.show_subplots(data=shoulder_data, title=f"Shoulder positions (Subject {i+1})")
+        dp.show_subplots(data=head_data, title=f"Head Positions (Sensor Values Difference) (Subject {i+1})")
+        dp.show_subplots(data=shoulder_data, title=f"Shoulder positions (Sensor Values Difference) (Subject {i+1})")
         # if i == 0:
         #     # stop at the first iteration
         #     break
