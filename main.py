@@ -14,7 +14,7 @@ if __name__ == '__main__':
     dataframes = dc.split_per_person(df=df_original, num_splits=5)
 
     size_data = dp.get_compressed_data(dc.exclude_errors(df_original), group_column=f"Size")
-    dp.show_subplots(data=size_data, title=f"Size vs Sensors")
+    dp.show_subplots(data=size_data, title=f"Shoulder Size vs Sensors")
 
     for i, df in enumerate(dataframes):
         df = dc.exclude_errors(df)
@@ -28,3 +28,6 @@ if __name__ == '__main__':
 
         dp.show_subplots(data=head_data, title=f"Head Positions (Subject {i+1})")
         dp.show_subplots(data=shoulder_data, title=f"Shoulder positions (Subject {i+1})")
+        # if i == 0:
+        #     # stop at the first iteration
+        #     break

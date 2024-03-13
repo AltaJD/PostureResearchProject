@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 columns_to_compress = ["Sensor 2", "Sensor 1", "Sensor 3"]
-save_file_path = "data_storage/images/default.png"
+save_file_path      = "data_storage/images/default.png"
 
 
 def show_subplots(data: dict, title: str) -> None:
@@ -30,8 +30,7 @@ def show_subplots(data: dict, title: str) -> None:
         key = list(data.keys())[0]
         modify_axe(axs, value, subplot_title=key)
     plt.tight_layout()
-    plt.title(title)
-    plt.show()
+    # plt.show()
     """ Save image """
     global save_file_path
     file_path = save_file_path.replace("default.png", title)
@@ -39,6 +38,10 @@ def show_subplots(data: dict, title: str) -> None:
 
 
 def compress_sensors_data(df: pd.DataFrame, columns: list[str]) -> list[list[float]]:
+    """ Return the list of the sensors values as list of list
+    where index represents sensor number
+    :returns [[650, 651, ...], [850, 851, ...], [650, 651, ...]]
+    """
     result = []
     for col_name in columns:
         result.append(df[col_name].tolist())
