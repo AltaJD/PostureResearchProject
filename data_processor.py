@@ -79,7 +79,9 @@ def describe_sensors_values(df_original: pd.DataFrame) -> None:
         """
         return [len(values) for values in sensors_values]
 
-    data: list[list[float]] = compress_sensors_data(df_original, columns=["Sensor 1", "Sensor 2", "Sensor 3"])
+    """ Show general statistics """
+    sensor_columns = ["Sensor 1", "Sensor 2", "Sensor 3"]  # name of the columns containing the values
+    data: list[list[float]] = compress_sensors_data(df_original, columns=sensor_columns)
     orig_data_lengths = get_lengths(sensors_values=data)
     cleaned_data = [filtered_list(values) for values in data]
     cleaned_data_lengths = get_lengths(sensors_values=cleaned_data)

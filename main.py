@@ -13,7 +13,19 @@ if __name__ == '__main__':
     dp.describe_sensors_values(df_original)
     dataframes = dc.split_per_person(df=df_original, num_splits=5)
 
+    sensor_columns = ["Sensor 1", "Sensor 2", "Sensor 3"]  # name of the columns containing the values
+    df_sensors = df_original[sensor_columns]
+    df_sensors = df_sensors.describe()
+    print("Sensor statistics INCLUDING error values and outliers: ")
+    print(df_sensors)
+
     df_cleaned = dc.exclude_errors(df_original)
+
+    df_sensors = df_cleaned[sensor_columns]
+    df_sensors = df_sensors.describe()
+    print("Sensor statistics EXCLUDING error values and outliers: ")
+    print(df_sensors)
+
     print("Total VALID rows:\t", df_cleaned.shape[0])
     print("Total INVALID rows:\t", df_original.shape[0]-df_cleaned.shape[0])
 
@@ -36,6 +48,6 @@ if __name__ == '__main__':
 
         dp.show_subplots(data=head_data, title=f"Head Positions (Sensor Values Difference) (Subject {i+1})")
         dp.show_subplots(data=shoulder_data, title=f"Shoulder positions (Sensor Values Difference) (Subject {i+1})")
-        # if i == 0:
-        #     # stop at the first iteration
-        #     break
+        if i == 0:
+            # stop at the first iteration
+            break
