@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 columns_to_compress = ["Sensor 2-3", "Sensor 2-1"]
 save_file_path = "data_storage/images/default.png"
@@ -62,10 +63,13 @@ def get_compressed_data(df: pd.DataFrame, group_column: str) -> dict:
     return result
 
 
-def describe_sensors_values(df_original: pd.DataFrame) -> None:
-    """ Shows the percentage of valid values over all received values
+def describe_sensors_values(df: pd.DataFrame) -> None:
+    """
+    1. Shows the percentage of valid values over all received values
     Assumption: error values are considered to be outside of range [lr, hr]
     Formula: valid_values/all_values*100 rounded to 2 digits after comma
+    2. Provides basic statistics of sensor values using pd.describe()
+    3. Determines the correlations between sensor values
     """
     def filtered_list(values: list[float]) -> list[float]:
         """ Return only the values in range [lr, hr]"""
@@ -81,14 +85,36 @@ def describe_sensors_values(df_original: pd.DataFrame) -> None:
 
     """ Show general statistics """
     sensor_columns = ["Sensor 1", "Sensor 2", "Sensor 3"]  # name of the columns containing the values
-    data: list[list[float]] = compress_sensors_data(df_original, columns=sensor_columns)
+    interested_characteristics = ["count", "mean", "min", "max"]
+    df_sensors = df[sensor_columns]
+    df_sensors = df_sensors.describe()
+    print(df_sensors.loc[interested_characteristics])
+    print('\n')
+
+    """ Show correlation map using seaborn """
+    correlation_matrix = df_sensors.corr(method="pearson")
+    print(correlation_matrix)
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+    title = "Sensor Correlations Map"
+    # plt.show()
+    global save_file_path
+    file_path = save_file_path.replace("default.png", title)
+    if df.name is not None:
+        comment = f"({df.name})"
+        file_path += comment
+        title += comment
+    plt.title(title)
+    plt.savefig(file_path)
+    plt.close()
+
+    """ Show the percentage of valid values """
+    data: list[list[float]] = compress_sensors_data(df, columns=sensor_columns)
     orig_data_lengths = get_lengths(sensors_values=data)
     cleaned_data = [filtered_list(values) for values in data]
     cleaned_data_lengths = get_lengths(sensors_values=cleaned_data)
     sensor_id = 1
     total_values_valid = 0
     total_values_removed = 0
-    # Show the percentage of valid values
     for original_length, cleaned_length in zip(orig_data_lengths, cleaned_data_lengths):
         accuracy = round(cleaned_length/original_length*100, 2)
         print(f"Sensor {sensor_id} has accuracy {accuracy}%\t"
@@ -100,14 +126,14 @@ def describe_sensors_values(df_original: pd.DataFrame) -> None:
         total_values_removed += original_length - cleaned_length
 
 
-def find_correlations(df: pd.DataFrame, col1: str, col2: str) -> None:
-    def is_significant(corr: float, n: int) -> bool:
+def find2_correlations(df: pd.DataFrame, col1: str, col2: str) -> None:
+    def is_significant(corr_value: float, n: int) -> bool:
         """ Determines the significance of the correlation
-        :param corr is correlation value
+        :param corr_value is correlation value
         :param n is sample size
         :returns true if p_values < 5%, otherwise false
         """
-        p_value = 2 * (1 - abs(corr)) * (n - 2) / (n * (n - 2 - 1))  # based on pearson method
+        p_value = 2 * (1 - abs(corr_value)) * (n - 2) / (n * (n - 2 - 1))  # based on pearson method
         if p_value < 0.05:
             return True
         return False
@@ -126,3 +152,31 @@ def find_correlations(df: pd.DataFrame, col1: str, col2: str) -> None:
         print(f"Corr: {corr}\t"
               f"No relationship found between '{col1}' and '{col2}'\t"
               f"Is significant: {is_significant(corr, n=sample_size)}")
+    if abs(corr) > 0.5:
+        print("Strong correlation")
+    else:
+        print("Weak correlation")
+    print("\n")
+
+
+def find_group_description(df: pd.DataFrame, column_name: str) -> None:
+    """ Describes the df according to the group common attribute
+    :param df is dataframe containing column_name
+    :param column_name indicates the column where to find the common attribute
+    """
+    sensor_cols = ["Sensor 1", "Sensor 2", "Sensor 3"]
+    interested_characteristics = ["count", "mean", "min", "max"]
+    groups = df.groupby(column_name)
+    for group_name, data in groups:
+        df_grouped: pd.DataFrame = groups.get_group(group_name)
+        # describe sensor values per group
+        stats = df_grouped[sensor_cols].describe()
+        print(column_name, ": ", group_name)
+        print(stats.loc[interested_characteristics])
+        print("\n")
+
+
+def kmeans_clustering(df: pd.DataFrame) -> None:
+    """ Cluster the values of the sensors for posture labeling """
+    # TODO
+    pass
