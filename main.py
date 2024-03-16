@@ -48,3 +48,7 @@ if __name__ == '__main__':
         if i == 0:
             # stop at the first iteration
             break
+
+    """ Testing new functions """
+    dp.visualize_clusters(df_cleaned, label_col="Head Posture")
+    dp.visualize_clusters(df_cleaned, label_col="Shoulder Posture")

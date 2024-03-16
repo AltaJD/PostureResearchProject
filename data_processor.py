@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from mpl_toolkits.mplot3d import Axes3D
 
 columns_to_compress = ["Sensor 2-3", "Sensor 2-1"]
 save_file_path = "data_storage/images/default.png"
@@ -176,7 +177,33 @@ def find_group_description(df: pd.DataFrame, column_name: str) -> None:
         print("\n")
 
 
-def kmeans_clustering(df: pd.DataFrame) -> None:
-    """ Cluster the values of the sensors for posture labeling """
-    # TODO
-    pass
+def visualize_clusters(df, label_col):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    x = df['Sensor 1']
+    y = df['Sensor 2']
+    z = df['Sensor 3']
+    labels = df[label_col]
+
+    unique_labels = labels.unique()
+    num_labels = len(unique_labels)
+
+    colormap = plt.cm.get_cmap('viridis', num_labels)
+
+    for i, label in enumerate(unique_labels):
+        cluster_indices = labels == label
+        color = colormap(i / (num_labels - 1))  # Normalize the index to [0, 1]
+        ax.scatter(x[cluster_indices], y[cluster_indices], z[cluster_indices], color=color, label=label)
+
+    ax.set_xlabel('Sensor 1')
+    ax.set_ylabel('Sensor 2')
+    ax.set_zlabel('Sensor 3')
+
+    ax.legend()
+    # plt.show()
+    title = f"Values Clustering ({label_col})"
+    plt.title(title)
+    global save_file_path
+    file_path = save_file_path.replace("default.png", title)
+    plt.savefig(file_path)
