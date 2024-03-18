@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 
-save_file_path = "data_storage/images/default.png"
+save_file_path = "data_storage/images/new_dataset/default.png"
 fig_height = 10  # inches
 fig_width = 20  # inches
 
