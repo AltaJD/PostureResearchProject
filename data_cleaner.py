@@ -8,7 +8,7 @@ def split_per_person(df: pd.DataFrame, num_splits=5) -> list[pd.DataFrame]:
     :param num_splits is number of subjects per sample
     :returns the list of new dataframes
     """
-    total_rows = len(df)
+    total_rows = 4321
     rows_per_split = total_rows // num_splits
     dataframes = []
     start_index = 0

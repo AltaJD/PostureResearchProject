@@ -3,13 +3,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 
-columns_to_compress = ["Sensor 2-3", "Sensor 2-1"]
 save_file_path = "data_storage/images/default.png"
 fig_height = 10  # inches
 fig_width = 20  # inches
 
 
-def show_subplots(data: dict, title: str) -> None:
+def show_subplots(data: dict, title: str, columns_to_compress: list[str]) -> None:
     """ Represent data in different subplots
     :param data is list consisting of lists of any type of data.
     :param title represents the name of the group of values.
@@ -39,6 +38,7 @@ def show_subplots(data: dict, title: str) -> None:
     global save_file_path
     file_path = save_file_path.replace("default.png", title)
     fig.savefig(file_path)
+    plt.close()
 
 
 def compress_sensors_data(df: pd.DataFrame, columns: list[str]) -> list[list[float]]:
@@ -52,7 +52,7 @@ def compress_sensors_data(df: pd.DataFrame, columns: list[str]) -> list[list[flo
     return result
 
 
-def get_compressed_data(df: pd.DataFrame, group_column: str) -> dict:
+def get_compressed_data(df: pd.DataFrame, group_column: str, columns_to_compress: list[str]) -> dict:
     """ Returns the data in the format:
     {"Posture Name": [float1, float2, ...]}
     """
@@ -85,28 +85,12 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
         return [len(values) for values in sensors_values]
 
     """ Show general statistics """
-    sensor_columns = ["Sensor 1", "Sensor 2", "Sensor 3"]  # name of the columns containing the values
+    sensor_columns = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]  # name of the columns containing the values
     interested_characteristics = ["count", "mean", "min", "max"]
     df_sensors = df[sensor_columns]
     df_sensors = df_sensors.describe()
     print(df_sensors.loc[interested_characteristics])
     print('\n')
-
-    """ Show correlation map using seaborn """
-    correlation_matrix = df_sensors.corr(method="pearson")
-    print(correlation_matrix)
-    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
-    title = "Sensor Correlations Map"
-    # plt.show()
-    global save_file_path
-    file_path = save_file_path.replace("default.png", title)
-    if df.name is not None:
-        comment = f"({df.name})"
-        file_path += comment
-        title += comment
-    plt.title(title)
-    plt.savefig(file_path)
-    plt.close()
 
     """ Show the percentage of valid values """
     data: list[list[float]] = compress_sensors_data(df, columns=sensor_columns)
@@ -165,7 +149,7 @@ def find_group_description(df: pd.DataFrame, column_name: str) -> None:
     :param df is dataframe containing column_name
     :param column_name indicates the column where to find the common attribute
     """
-    sensor_cols = ["Sensor 1", "Sensor 2", "Sensor 3"]
+    sensor_cols = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]
     interested_characteristics = ["count", "mean", "min", "max"]
     groups = df.groupby(column_name)
     for group_name, data in groups:
@@ -207,3 +191,36 @@ def visualize_clusters(df, label_col):
     global save_file_path
     file_path = save_file_path.replace("default.png", title)
     plt.savefig(file_path)
+    plt.close()
+
+
+def show_corr_map(df: pd.DataFrame, notes=None) -> None:
+    def formatted_columns(columns: list[str]) -> dict:
+        result = {}
+        max_length = len("Sensor X")
+        for col in columns:
+            if len(col) <= max_length:
+                continue
+            first_letters = [word[0].upper() for word in col.split()]
+            new_col_name = ''.join(first_letters)
+            result[col] = new_col_name.split('(')[0]  # exclude everything after (
+        return result
+
+    """ Show correlation map using seaborn """
+    new_cols = formatted_columns(df.columns)
+    df_copied = df.rename(columns=new_cols)
+    correlation_matrix: pd.DataFrame = df_copied.corr(method="pearson")
+    print("Corr Matrix")
+    print(df_copied)
+    sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+    title = "Sensor Correlations Map"
+    # plt.show()
+    global save_file_path
+    file_path = save_file_path.replace("default.png", title)
+    if notes is not None:
+        comment = f"({notes})"
+        file_path += comment
+        title += comment
+    plt.title(title)
+    plt.savefig(file_path)
+    plt.close()
