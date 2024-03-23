@@ -3,58 +3,22 @@ import data_cleaner as dc
 import data_processor as dp
 
 
-if __name__ == '__main__':
-    """ Extract and clean data  """
-    file = "data_storage/input_data/new_posture_data.csv"
-    df_original = pd.read_csv(file, delimiter=",")
-    df_original.name = "With Errors"
-    dc.strip_columns(df_original)
-    df_original["Sensor 2-3"] = df_original["Sensor 2"] - df_original["Sensor 3"]
-    df_original["Sensor 2-1"] = df_original["Sensor 2"] - df_original["Sensor 1"]
-    dataframes = dc.split_per_person(df=df_original, num_splits=2)
-    columns_to_compress = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]
+def show_discrepancies(df: pd.DataFrame, category=None) -> None:
+    discrepancies_data: dict[str, list[int]] = dp.get_discrepancies(df["Sensor 4-2"].tolist())
+    if category is not None:
+        title_bar = f"Discrepancies ({df.name}, {category})"
+    else:
+        title_bar = f"Discrepancies ({df.name})"
+    dp.show_bar_chart(discrepancies_data, title=title_bar)
 
-    """ Describe sensors basic statistics """
-    dp.describe_sensors_values(df_original)  # includes errors
-    df_cleaned = dc.exclude_errors(df_original)
-    df_cleaned.name = "No Errors"
-    dp.describe_sensors_values(df_cleaned)  # excludes error
 
-    print('\n')
-    print("Total VALID rows:\t", df_cleaned.shape[0])
-    print("Total INVALID rows:\t", df_original.shape[0]-df_cleaned.shape[0])
-    print('\n')
-
-    size_data = dp.get_compressed_data(df_cleaned,
-                                       group_column=f"Size",
-                                       columns_to_compress=columns_to_compress)
-    dp.show_subplots(data=size_data,
-                     title=f"Shoulder Size vs Sensors",
-                     columns_to_compress=columns_to_compress)
-
-    """ Show correlations """
-    # dp.find2_correlations(df_cleaned, col1="Width of shoulders", col2="Sensor 1")
-    # dp.find2_correlations(df_cleaned, col1="Width of shoulders", col2="Sensor 3")
-    interested_cols = ["Horizational Distance (CM)",
-                       "Vertical distance between shoulderes and table surface",
-                       "Vertical distance between eye level and table surface",
-                       "Width of shoulders",
-                       "Horizontal distance between eyes and head posture device",
-                       "Sensor 1",
-                       "Sensor 2",
-                       "Sensor 3",
-                       "Sensor 4"]
-    dp.show_corr_map(df_original[interested_cols], notes="With Errors")
-    dp.show_corr_map(df_cleaned[interested_cols], notes="Without Errors")
-
-    dp.find_group_description(df_cleaned, column_name="Head Posture")
-    dp.find_group_description(df_cleaned, column_name="Shoulder Posture")
-
-    """ Get information per subject """
-
-    for i, df in enumerate(dataframes):
-        print(f"Subject {i+1}")
+def show_data_per_subject(df_passed: pd.DataFrame) -> None:
+    dataframes_subjects = dp.split_per_person(df=df_passed, num_splits=5)
+    for i, df in enumerate(dataframes_subjects):
+        subject_num = f"Subject {i+1}"
+        print(subject_num)
         # df = dc.exclude_errors(df)
+        df.name = "With Errors"
 
         """ Process data """
         # dp.find2_correlations(df, col1="Horizontal distance between eyes and head posture device", col2="Sensor 2")
@@ -66,6 +30,62 @@ if __name__ == '__main__':
         #     # stop at the first iteration
         #     break
 
+
+if __name__ == '__main__':
+    """ Extract and clean data  """
+    file = "data_storage/input_data/data_22_03.csv"
+    df_original = pd.read_csv(file, delimiter=",")
+    df_original.name = "With Errors"
+    dc.strip_columns(df_original)
+    df_original["Sensor 4-2"] = df_original["Sensor 4"] - df_original["Sensor 2"]
+    columns_to_compress = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]
+
+    """ Describe sensors basic statistics """
+    dp.describe_sensors_values(df_original)  # includes errors
+    df_cleaned: pd.DataFrame = dc.exclude_errors(df_original)
+    df_cleaned.name = "No Errors"
+    dp.describe_sensors_values(df_cleaned)  # excludes error
+
+
+    print('\n')
+    print("Total VALID rows:\t", df_cleaned.shape[0])
+    print("Total INVALID rows:\t", df_original.shape[0]-df_cleaned.shape[0])
+    print('\n')
+
+    """ Save DF """
+    file = "data_storage/output_data/df_cleaned.csv"
+    df_cleaned.to_csv(file)
+
+    size_data = dp.get_compressed_data(df_cleaned,
+                                       group_column=f"Size",
+                                       columns_to_compress=columns_to_compress)
+    dp.show_subplots(data=size_data,
+                     title=f"Shoulder Size vs Sensors",
+                     columns_to_compress=columns_to_compress)
+
+    """ Show correlations """
+
+    dp.find_group_description(df_cleaned, column_name="Head Posture")
+    dp.find_group_description(df_cleaned, column_name="Shoulder Posture")
+
     """ Show values as clusters new functions """
     dp.visualize_clusters(df_cleaned, label_col="Head Posture")
     dp.visualize_clusters(df_cleaned, label_col="Shoulder Posture")
+
+    """ Get information per subject """
+    # show_data_per_subject(df_passed=df_original)
+
+    """ Show clusters per shoulder width """
+    groups = df_cleaned.groupby("Size")
+    for width, data in groups:
+        df_shoulder = groups.get_group(width)
+        dp.visualize_clusters(df_shoulder,
+                              label_col=f"Shoulder Posture",
+                              title_note=str(width))
+
+    """ Show discrepancies per head posture """
+    groups = df_original.groupby("Head Posture")
+    for head, data in groups:
+        df_head = groups.get_group(head)
+        df_head.name = "No Errors"
+        show_discrepancies(df_head, category=str(head))

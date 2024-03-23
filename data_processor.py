@@ -1,44 +1,38 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from typing import Callable
 from mpl_toolkits.mplot3d import Axes3D
 
-save_file_path = "data_storage/images/new_dataset/default.png"
+save_file_path = "data_storage/images/default.png"
 fig_height = 10  # inches
 fig_width = 20  # inches
 
 
-def show_subplots(data: dict, title: str, columns_to_compress: list[str]) -> None:
-    """ Represent data in different subplots
-    :param data is list consisting of lists of any type of data.
-    :param title represents the name of the group of values.
-    """
-    def modify_axe(axe, values_list: list[list[int]], subplot_title: str) -> None:
-        for j, values in enumerate(values_list):
-            axe.plot(values, label=columns_to_compress[j])
-            axe.legend()
-            axe.set_ylabel("Distance")
-            axe.set_xlabel("Number of values")
-            axe.set_title(subplot_title)
+def get_discrepancies(values: list[int]) -> dict[str, list[int]]:
+        """ Discrepancies are represented as dict:
+        {
+        "larger_50": [1, 2, 3],
+        "larger_100": [1, 2, 3],
+        "larger_150": [1, 2, 3],
+        }
+        """
+        def get_filter_func(threshold: int) -> Callable:
+            def filter_func(x) -> bool:
+                if x > threshold:
+                    return True
+                else:
+                    return False
 
-    fig, axs = plt.subplots(nrows=len(data), figsize=(fig_width, fig_height))
-    fig.suptitle(title)
-    if len(data) > 1:
-        for i, key in enumerate(data):
-            # key represents posture name of head/shoulder/size etc
-            modify_axe(axs[i], data[key], subplot_title=key)
-    else:
-        # since the dictionary consists of only one key, the value is:
-        value = list(data.values())[0]
-        key = list(data.keys())[0]
-        modify_axe(axs, value, subplot_title=key)
-    plt.tight_layout()
-    # plt.show()
-    """ Save image """
-    global save_file_path
-    file_path = save_file_path.replace("default.png", title)
-    fig.savefig(file_path)
-    plt.close()
+            return filter_func
+
+        larger_50  = get_filter_func(50)
+        larger_100 = get_filter_func(100)
+        larger_150 = get_filter_func(150)
+
+        return {"larger_50": list(filter(larger_50, values)),
+                "larger_100": list(filter(larger_100, values)),
+                "larger_150": list(filter(larger_150, values))}
 
 
 def compress_sensors_data(df: pd.DataFrame, columns: list[str]) -> list[list[float]]:
@@ -50,6 +44,33 @@ def compress_sensors_data(df: pd.DataFrame, columns: list[str]) -> list[list[flo
     for col_name in columns:
         result.append(df[col_name].tolist())
     return result
+
+
+def split_per_person(df: pd.DataFrame, num_splits=5) -> list[pd.DataFrame]:
+    """ Divide the dataframe into new dataframes
+    !Assumption: each subject has equal number of records
+    :param df is original (non-modified) dataframe with all values
+    :param num_splits is number of subjects per sample
+    :returns the list of new dataframes
+    """
+    total_rows = len(df)
+    rows_per_split = total_rows // num_splits
+    dataframes = []
+    start_index = 0
+
+    for i in range(num_splits):
+        end_index = start_index + rows_per_split
+
+        if i == num_splits - 1:
+            # For the last split, include any remaining rows
+            end_index = total_rows
+
+        split_df = df.iloc[start_index:end_index]
+        dataframes.append(split_df)
+
+        start_index = end_index
+
+    return dataframes
 
 
 def get_compressed_data(df: pd.DataFrame, group_column: str, columns_to_compress: list[str]) -> dict:
@@ -72,7 +93,7 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
     2. Provides basic statistics of sensor values using pd.describe()
     3. Determines the correlations between sensor values
     """
-    def filtered_list(values: list[float]) -> list[float]:
+    def filtered_list_from_errors(values: list[float]) -> list[float]:
         """ Return only the values in range [lr, hr]"""
         lr = 650
         hr = 900
@@ -86,7 +107,7 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
 
     """ Show general statistics """
     sensor_columns = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]  # name of the columns containing the values
-    interested_characteristics = ["count", "mean", "min", "max"]
+    interested_characteristics = ["count", "mean", "min", "max", "std"]
     df_sensors = df[sensor_columns]
     df_sensors = df_sensors.describe()
     print(df_sensors.loc[interested_characteristics])
@@ -95,14 +116,16 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
     """ Show the percentage of valid values """
     data: list[list[float]] = compress_sensors_data(df, columns=sensor_columns)
     orig_data_lengths = get_lengths(sensors_values=data)
-    cleaned_data = [filtered_list(values) for values in data]
+    cleaned_data = [filtered_list_from_errors(values) for values in data]
     cleaned_data_lengths = get_lengths(sensors_values=cleaned_data)
     sensor_id = 1
     total_values_valid = 0
     total_values_removed = 0
     for original_length, cleaned_length in zip(orig_data_lengths, cleaned_data_lengths):
         accuracy = round(cleaned_length/original_length*100, 2)
+        out_of_range = round(100-accuracy, 2)
         print(f"Sensor {sensor_id} has accuracy {accuracy}%\t"
+              f"Out of Range: {out_of_range}\t"
               f"Valid values: {cleaned_length}\t"
               f"Invalid values: {original_length-cleaned_length}\t"
               f"Total values: {original_length}")
@@ -150,7 +173,7 @@ def find_group_description(df: pd.DataFrame, column_name: str) -> None:
     :param column_name indicates the column where to find the common attribute
     """
     sensor_cols = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]
-    interested_characteristics = ["count", "mean", "min", "max"]
+    interested_characteristics = ["count", "mean", "min", "max", "std"]
     groups = df.groupby(column_name)
     for group_name, data in groups:
         df_grouped: pd.DataFrame = groups.get_group(group_name)
@@ -160,13 +183,21 @@ def find_group_description(df: pd.DataFrame, column_name: str) -> None:
         print(stats.loc[interested_characteristics])
         print("\n")
 
+        # get correlations per group/posture
+        interested_cols = ["Sensor 1",
+                           "Sensor 2",
+                           "Sensor 3",
+                           "Sensor 4"]
+        note = column_name.split()[0]+f"_{str(group_name)}"
+        show_corr_map(df_grouped[interested_cols], notes=note)
 
-def visualize_clusters(df, label_col):
+
+def visualize_clusters(df, label_col, title_note=None):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
     x = df['Sensor 1']
-    y = df['Sensor 2']
+    y = df['Sensor 4']
     z = df['Sensor 3']
     labels = df[label_col]
 
@@ -181,12 +212,15 @@ def visualize_clusters(df, label_col):
         ax.scatter(x[cluster_indices], y[cluster_indices], z[cluster_indices], color=color, label=label)
 
     ax.set_xlabel('Sensor 1')
-    ax.set_ylabel('Sensor 2')
+    ax.set_ylabel('Sensor 4')
     ax.set_zlabel('Sensor 3')
 
     ax.legend()
     # plt.show()
-    title = f"Values Clustering ({label_col})"
+    if title_note is not None:
+        title = f"Values Clustering ({label_col}, {title_note})"
+    else:
+        title = f"Values Clustering ({label_col})"
     plt.title(title)
     global save_file_path
     file_path = save_file_path.replace("default.png", title)
@@ -210,10 +244,8 @@ def show_corr_map(df: pd.DataFrame, notes=None) -> None:
     new_cols = formatted_columns(df.columns)
     df_copied = df.rename(columns=new_cols)
     correlation_matrix: pd.DataFrame = df_copied.corr(method="pearson")
-    print("Corr Matrix")
-    print(df_copied)
     sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
-    title = "Sensor Correlations Map"
+    title = "Corr Map"
     # plt.show()
     global save_file_path
     file_path = save_file_path.replace("default.png", title)
@@ -222,5 +254,58 @@ def show_corr_map(df: pd.DataFrame, notes=None) -> None:
         file_path += comment
         title += comment
     plt.title(title)
+    plt.savefig(file_path)
+    plt.close()
+
+
+def show_subplots(data: dict, title: str, columns_to_compress: list[str]) -> None:
+    """ Represent data in different subplots
+    :param data is list consisting of lists of any type of data,
+    where key is a label and value is a list of values
+    :param title represents the name of the group of values.
+    """
+    def modify_axe(axe, values_list: list[list[int]], subplot_title: str) -> None:
+        for j, values in enumerate(values_list):
+            axe.plot(values, label=columns_to_compress[j])
+            axe.legend()
+            axe.set_ylabel("Distance")
+            axe.set_xlabel("Number of values")
+            axe.set_title(subplot_title)
+
+    fig, axs = plt.subplots(nrows=len(data), figsize=(fig_width, fig_height))
+    fig.suptitle(title)
+    if len(data) > 1:
+        for i, key in enumerate(data):
+            # key represents posture name of head/shoulder/size etc
+            modify_axe(axs[i], data[key], subplot_title=key)
+    else:
+        # since the dictionary consists of only one key, the value is:
+        value = list(data.values())[0]
+        key = list(data.keys())[0]
+        modify_axe(axs, value, subplot_title=key)
+    plt.tight_layout()
+    # plt.show()
+    """ Save image """
+    global save_file_path
+    file_path = save_file_path.replace("default.png", title)
+    fig.savefig(file_path)
+    plt.close()
+
+
+def show_bar_chart(data, title: str) -> None:
+    """ Show Bar Chart
+    :param data = {"label", list[int]}
+    :param title of the bar
+    """
+    categories = list(data.keys())
+    counts = [len(data[category]) for category in categories]
+
+    plt.bar(categories, counts)
+    plt.xlabel('Category')
+    plt.ylabel('Count')
+    plt.title(title)
+    # plt.show()
+    global save_file_path
+    file_path = save_file_path.replace("default.png", title)
     plt.savefig(file_path)
     plt.close()
