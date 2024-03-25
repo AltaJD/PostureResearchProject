@@ -1,5 +1,5 @@
-index,Accuracy (%),Out of Range (%),Valid Values,Invalid Values,Total Values
-Sensor 0,100.0,0.0,1860,0,1860
+Sensor,Accuracy (%),Out of Range (%),Valid Values,Invalid Values,Total Values
 Sensor 1,100.0,0.0,1860,0,1860
 Sensor 2,100.0,0.0,1860,0,1860
 Sensor 3,100.0,0.0,1860,0,1860
+Sensor 4,100.0,0.0,1860,0,1860

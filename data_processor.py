@@ -2,12 +2,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Callable
+import numpy as np
+import config_reader as cr
 from mpl_toolkits.mplot3d import Axes3D
 
-save_img_file_path = "data_storage/images/default.png"
-save_csv_file_path = "data_storage/output_data/default.csv"
-fig_height = 10  # inches
-fig_width = 20  # inches
+save_img_file_path = cr.get("save_img_file_path")
+save_csv_file_path = cr.get("save_csv_file_path")
+fig_height = cr.get("fig_height")  # inches
+fig_width = cr.get("fig_width")  # inches
 
 
 def rename_img_file(name: str) -> str:
@@ -87,7 +89,7 @@ def split_per_person(df: pd.DataFrame, num_splits=5) -> list[pd.DataFrame]:
     return dataframes
 
 
-def get_compressed_data(df: pd.DataFrame, group_column: str, columns_to_compress: list[str]) -> dict:
+def get_compressed_data_group(df: pd.DataFrame, group_column: str, columns_to_compress: list[str]) -> dict:
     """ Returns the data in the format:
     {"Posture Name": [float1, float2, ...]}
     """
@@ -124,12 +126,12 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
         will be converted to dataframe in pandas
         """
         compressed_data = {}
-        sensors      = [f"Sensor {i}" for i in range(len(orig_data_lens))]
+        sensors      = [f"Sensor {i+1}" for i in range(len(orig_data_lens))]
         accuracies   = list(map(lambda x, y: round(x/y*100, 2), cleaned_data_lens, orig_data_lens))
         out_of_range = list(map(lambda x: round(100-x, 2), accuracies))
         total_values_removed = list(map(lambda x, y: x-y, orig_data_lens, cleaned_data_lens))
         """ Save results in dataframe """
-        compressed_data["index"] = sensors
+        compressed_data["Sensor"] = sensors
         compressed_data["Accuracy (%)"] = accuracies
         compressed_data["Out of Range (%)"] = out_of_range
         compressed_data["Valid Values"] = cleaned_data_lens
@@ -281,13 +283,29 @@ def show_subplots(data: dict, title: str, columns_to_compress: list[str]) -> Non
     where key is a label and value is a list of values
     :param title represents the name of the group of values.
     """
+    def get_boundaries(values: list[list[int]]) -> tuple:
+        """ Get array of the hr and lr values to
+        represent the boundaries lines for subplots
+        The first array is lower boundary
+        The second array is higher boundary
+        """
+        lr = 650  # lower range
+        hr = 900  # higher range
+        length = len(values[0])
+        lb = np.full(length, lr)
+        hb = np.full(length, hr)
+        return lb, hb
+
     def modify_axe(axe, values_list: list[list[int]], subplot_title: str) -> None:
         for j, values in enumerate(values_list):
             axe.plot(values, label=columns_to_compress[j])
-            axe.legend()
-            axe.set_ylabel("Distance")
-            axe.set_xlabel("Number of values")
             axe.set_title(subplot_title)
+        lb, hb = get_boundaries(values_list)
+        axe.plot(lb, label="Lower Boundary", color="r", linestyle="--")
+        axe.plot(hb, label="Higher Boundary", color="r", linestyle="--")
+        axe.legend()
+        axe.set_ylabel("Distance")
+        axe.set_xlabel("Number of values")
 
     fig, axs = plt.subplots(nrows=len(data), figsize=(fig_width, fig_height))
     fig.suptitle(title)
@@ -314,8 +332,14 @@ def show_bar_chart(data, title: str) -> None:
     """
     categories = list(data.keys())
     counts = [len(data[category]) for category in categories]
-
     plt.bar(categories, counts)
+    # Add accurate number per bar
+    for i, count in enumerate(counts):
+        plt.text(i, count, str(count), ha="center", va="top")
+
+    # Calculate and display the total count
+    total_count = sum(counts)
+    plt.text(len(categories)/2, max(counts), f'Total: {total_count}', ha='center', va='bottom')
     plt.xlabel('Category')
     plt.ylabel('Count')
     plt.title(title)

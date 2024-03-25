@@ -1,0 +1,8 @@
+save_img_file_path: "data_storage/images/default.png"
+save_csv_file_path: "data_storage/output_data/default.csv"
+
+fig_height: 10
+fig_width: 20
+
+discrepancies_column: "Sensor 2-4"
+columns_to_compress: ["Sensor 2", "Sensor 4"]

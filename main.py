@@ -1,10 +1,12 @@
 import pandas as pd
 import data_cleaner as dc
 import data_processor as dp
+import config_reader as cr
 
 
 def show_discrepancies(df: pd.DataFrame, category=None) -> None:
-    discrepancies_data: dict[str, list[int]] = dp.get_discrepancies(df["Sensor 4-2"].tolist())
+    column_name = cr.get("discrepancies_column")
+    discrepancies_data: dict[str, list[int]] = dp.get_discrepancies(df[column_name].tolist())
     if category is not None:
         title_bar = f"Discrepancies ({df.name}, {category})"
     else:
@@ -12,7 +14,7 @@ def show_discrepancies(df: pd.DataFrame, category=None) -> None:
     dp.show_bar_chart(discrepancies_data, title=title_bar)
 
 
-def show_data_per_subject(df_passed: pd.DataFrame) -> None:
+def show_data_per_subject(df_passed: pd.DataFrame, test=False) -> None:
     dataframes_subjects = dp.split_per_person(df=df_passed, num_splits=5)
     for i, df in enumerate(dataframes_subjects):
         subject_num = f"Subject {i+1}"
@@ -22,23 +24,31 @@ def show_data_per_subject(df_passed: pd.DataFrame) -> None:
 
         """ Process data """
         # dp.find2_correlations(df, col1="Horizontal distance between eyes and head posture device", col2="Sensor 2")
-        head_data     = dp.get_compressed_data(df, group_column=f"Head Posture", columns_to_compress=columns_to_compress)
-        shoulder_data = dp.get_compressed_data(df, group_column=f"Shoulder Posture", columns_to_compress=columns_to_compress)
+        head_data     = dp.get_compressed_data_group(df, group_column=f"Head Posture", columns_to_compress=columns_to_compress)
+        shoulder_data = dp.get_compressed_data_group(df, group_column=f"Shoulder Posture", columns_to_compress=columns_to_compress)
         dp.show_subplots(data=head_data, title=f"Head Positions (Subject {i+1})", columns_to_compress=columns_to_compress)
         dp.show_subplots(data=shoulder_data, title=f"Shoulder positions (Subject {i+1})", columns_to_compress=columns_to_compress)
-        # if i == 0:
-        #     # stop at the first iteration
-        #     break
+        if i == 0 and test is True:
+            # stop at the first iteration
+            break
+
+
+def show_all_values(df_orig: pd.DataFrame, cols: list[str]) -> None:
+    zipped = dp.compress_sensors_data(df_orig, columns=cols)
+    dp.show_subplots(data={"All Sensors": zipped},
+                     title=f"All data ({df_orig.name})",
+                     columns_to_compress=cols)
 
 
 if __name__ == '__main__':
     """ Extract and clean data  """
     file = "data_storage/input_data/data_22_03.csv"
     df_original = pd.read_csv(file, delimiter=",")
+    # df_original = df_original.iloc[:4320]  # get only first 2 subjects only
     df_original.name = "With Errors"
     dc.strip_columns(df_original)
-    df_original["Sensor 4-2"] = df_original["Sensor 4"] - df_original["Sensor 2"]
-    columns_to_compress = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]
+    df_original[cr.get("discrepancies_column")] = df_original["Sensor 2"] - df_original["Sensor 4"]
+    columns_to_compress = cr.get("columns_to_compress")
 
     """ Describe sensors basic statistics """
     dp.describe_sensors_values(df_original)  # includes errors
@@ -51,19 +61,20 @@ if __name__ == '__main__':
     print("Total INVALID rows:\t", df_original.shape[0]-df_cleaned.shape[0])
     print('\n')
 
-    """ Save DF """
-    file = "data_storage/output_data/df_cleaned.csv"
-    df_cleaned.to_csv(file)
+    show_all_values(df_original, cols=columns_to_compress)
 
-    size_data = dp.get_compressed_data(df_cleaned,
-                                       group_column=f"Size",
-                                       columns_to_compress=columns_to_compress)
+    """ Save DF """
+    # file = "data_storage/output_data/df_cleaned.csv"
+    # df_cleaned.to_csv(file)
+
+    size_data = dp.get_compressed_data_group(df_cleaned,
+                                             group_column=f"Size",
+                                             columns_to_compress=columns_to_compress)
     dp.show_subplots(data=size_data,
                      title=f"Shoulder Size vs Sensors",
                      columns_to_compress=columns_to_compress)
 
     """ Show correlations """
-
     dp.find_group_description(df_cleaned, column_name="Head Posture")
     dp.find_group_description(df_cleaned, column_name="Shoulder Posture")
 
@@ -71,7 +82,7 @@ if __name__ == '__main__':
     dp.visualize_clusters(df_cleaned, label_col="Head Posture")
     dp.visualize_clusters(df_cleaned, label_col="Shoulder Posture")
 
-    """ Get information per subject """
+    """ Show information per subject """
     # show_data_per_subject(df_passed=df_original)
 
     """ Show clusters per shoulder width """
@@ -86,5 +97,5 @@ if __name__ == '__main__':
     groups = df_original.groupby("Head Posture")
     for head, data in groups:
         df_head = groups.get_group(head)
-        df_head.name = "No Errors"
+        df_head.name = "With Errors"
         show_discrepancies(df_head, category=str(head))

@@ -1,5 +1,5 @@
-index,Accuracy (%),Out of Range (%),Valid Values,Invalid Values,Total Values
-Sensor 0,89.19,10.81,9632,1168,10800
-Sensor 1,18.33,81.67,1980,8820,10800
-Sensor 2,89.78,10.22,9696,1104,10800
-Sensor 3,79.26,20.74,8560,2240,10800
+Sensor,Accuracy (%),Out of Range (%),Valid Values,Invalid Values,Total Values
+Sensor 1,89.19,10.81,9632,1168,10800
+Sensor 2,18.33,81.67,1980,8820,10800
+Sensor 3,89.78,10.22,9696,1104,10800
+Sensor 4,79.26,20.74,8560,2240,10800
