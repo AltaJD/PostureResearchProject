@@ -4,13 +4,27 @@ import seaborn as sns
 from typing import Callable
 from mpl_toolkits.mplot3d import Axes3D
 
-save_file_path = "data_storage/images/default.png"
+save_img_file_path = "data_storage/images/default.png"
+save_csv_file_path = "data_storage/output_data/default.csv"
 fig_height = 10  # inches
 fig_width = 20  # inches
 
 
+def rename_img_file(name: str) -> str:
+    global save_img_file_path
+    file_path = save_img_file_path.replace("default.png", name)
+    return file_path
+
+
+def rename_csv_file(name: str) -> str:
+    global save_csv_file_path
+    file_path = save_csv_file_path.replace("default.csv", name)
+    return file_path
+
+
 def get_discrepancies(values: list[int]) -> dict[str, list[int]]:
-        """ Discrepancies are represented as dict:
+        """
+        Discrepancies are represented as dict:
         {
         "larger_50": [1, 2, 3],
         "larger_100": [1, 2, 3],
@@ -105,6 +119,24 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
         """
         return [len(values) for values in sensors_values]
 
+    def convert_to_dataframe(orig_data_lens: list[int], cleaned_data_lens: list[int]) -> pd.DataFrame:
+        """ The data as {"col_name": int or string}
+        will be converted to dataframe in pandas
+        """
+        compressed_data = {}
+        sensors      = [f"Sensor {i}" for i in range(len(orig_data_lens))]
+        accuracies   = list(map(lambda x, y: round(x/y*100, 2), cleaned_data_lens, orig_data_lens))
+        out_of_range = list(map(lambda x: round(100-x, 2), accuracies))
+        total_values_removed = list(map(lambda x, y: x-y, orig_data_lens, cleaned_data_lens))
+        """ Save results in dataframe """
+        compressed_data["index"] = sensors
+        compressed_data["Accuracy (%)"] = accuracies
+        compressed_data["Out of Range (%)"] = out_of_range
+        compressed_data["Valid Values"] = cleaned_data_lens
+        compressed_data["Invalid Values"] = total_values_removed
+        compressed_data["Total Values"] = orig_data_lens
+        return pd.DataFrame.from_dict(compressed_data)
+
     """ Show general statistics """
     sensor_columns = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]  # name of the columns containing the values
     interested_characteristics = ["count", "mean", "min", "max", "std"]
@@ -118,20 +150,8 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
     orig_data_lengths = get_lengths(sensors_values=data)
     cleaned_data = [filtered_list_from_errors(values) for values in data]
     cleaned_data_lengths = get_lengths(sensors_values=cleaned_data)
-    sensor_id = 1
-    total_values_valid = 0
-    total_values_removed = 0
-    for original_length, cleaned_length in zip(orig_data_lengths, cleaned_data_lengths):
-        accuracy = round(cleaned_length/original_length*100, 2)
-        out_of_range = round(100-accuracy, 2)
-        print(f"Sensor {sensor_id} has accuracy {accuracy}%\t"
-              f"Out of Range: {out_of_range}\t"
-              f"Valid values: {cleaned_length}\t"
-              f"Invalid values: {original_length-cleaned_length}\t"
-              f"Total values: {original_length}")
-        sensor_id += 1
-        total_values_valid += cleaned_length
-        total_values_removed += original_length - cleaned_length
+    df_stats = convert_to_dataframe(orig_data_lengths, cleaned_data_lengths)
+    df_stats.to_csv(rename_csv_file(f"sensor_accuracy_data_{df.name}.csv"), index=False)
 
 
 def find2_correlations(df: pd.DataFrame, col1: str, col2: str) -> None:
@@ -222,9 +242,7 @@ def visualize_clusters(df, label_col, title_note=None):
     else:
         title = f"Values Clustering ({label_col})"
     plt.title(title)
-    global save_file_path
-    file_path = save_file_path.replace("default.png", title)
-    plt.savefig(file_path)
+    plt.savefig(rename_img_file(title))
     plt.close()
 
 
@@ -247,8 +265,7 @@ def show_corr_map(df: pd.DataFrame, notes=None) -> None:
     sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
     title = "Corr Map"
     # plt.show()
-    global save_file_path
-    file_path = save_file_path.replace("default.png", title)
+    file_path = rename_img_file(title)
     if notes is not None:
         comment = f"({notes})"
         file_path += comment
@@ -286,9 +303,7 @@ def show_subplots(data: dict, title: str, columns_to_compress: list[str]) -> Non
     plt.tight_layout()
     # plt.show()
     """ Save image """
-    global save_file_path
-    file_path = save_file_path.replace("default.png", title)
-    fig.savefig(file_path)
+    fig.savefig(rename_img_file(title))
     plt.close()
 
 
@@ -305,7 +320,5 @@ def show_bar_chart(data, title: str) -> None:
     plt.ylabel('Count')
     plt.title(title)
     # plt.show()
-    global save_file_path
-    file_path = save_file_path.replace("default.png", title)
-    plt.savefig(file_path)
+    plt.savefig(rename_img_file(title))
     plt.close()

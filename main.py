@@ -46,7 +46,6 @@ if __name__ == '__main__':
     df_cleaned.name = "No Errors"
     dp.describe_sensors_values(df_cleaned)  # excludes error
 
-
     print('\n')
     print("Total VALID rows:\t", df_cleaned.shape[0])
     print("Total INVALID rows:\t", df_original.shape[0]-df_cleaned.shape[0])
