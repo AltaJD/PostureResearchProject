@@ -54,7 +54,7 @@ def get_discrepancies(values: list[int]) -> dict[str, list[int]]:
 def compress_sensors_data(df: pd.DataFrame, columns: list[str]) -> list[list[float]]:
     """ Return the list of the sensors values as list of list
     where index represents sensor number
-    :returns [[650, 651, ...], [850, 851, ...], [650, 651, ...]]
+    :returns [[659, 651, ...], [850, 851, ...], [659, 651, ...]]
     """
     result = []
     for col_name in columns:
@@ -111,8 +111,8 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
     """
     def filtered_list_from_errors(values: list[float]) -> list[float]:
         """ Return only the values in range [lr, hr]"""
-        lr = 650
-        hr = 900
+        lr = cr.get("low_limit")
+        hr = cr.get("high_limit")
         return [value for value in values if lr <= value <= hr]
 
     def get_lengths(sensors_values: list[list[float]]) -> list[int]:
@@ -218,9 +218,9 @@ def visualize_clusters(df, label_col, title_note=None):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    x = df['Sensor 1']
-    y = df['Sensor 4']
-    z = df['Sensor 3']
+    x = df[cr.get("x")]
+    y = df[cr.get("x")]
+    z = df[cr.get("x")]
     labels = df[label_col]
 
     unique_labels = labels.unique()
@@ -233,9 +233,9 @@ def visualize_clusters(df, label_col, title_note=None):
         color = colormap(i / (num_labels - 1))  # Normalize the index to [0, 1]
         ax.scatter(x[cluster_indices], y[cluster_indices], z[cluster_indices], color=color, label=label)
 
-    ax.set_xlabel('Sensor 1')
-    ax.set_ylabel('Sensor 4')
-    ax.set_zlabel('Sensor 3')
+    ax.set_xlabel(cr.get("x"))
+    ax.set_ylabel(cr.get("y"))
+    ax.set_zlabel(cr.get("z"))
 
     ax.legend()
     # plt.show()
@@ -289,8 +289,8 @@ def show_subplots(data: dict, title: str, columns_to_compress: list[str]) -> Non
         The first array is lower boundary
         The second array is higher boundary
         """
-        lr = 650  # lower range
-        hr = 900  # higher range
+        lr = cr.get("low_limit")  # lower range
+        hr = cr.get("high_limit")  # higher range
         length = len(values[0])
         lb = np.full(length, lr)
         hb = np.full(length, hr)

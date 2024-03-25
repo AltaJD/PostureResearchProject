@@ -44,10 +44,10 @@ if __name__ == '__main__':
     """ Extract and clean data  """
     file = "data_storage/input_data/data_22_03.csv"
     df_original = pd.read_csv(file, delimiter=",")
-    # df_original = df_original.iloc[:4320]  # get only first 2 subjects only
+    df_original = df_original.iloc[:4320]  # get only first 2 subjects only
     df_original.name = "With Errors"
     dc.strip_columns(df_original)
-    df_original[cr.get("discrepancies_column")] = df_original["Sensor 2"] - df_original["Sensor 4"]
+    df_original[cr.get("discrepancies_column")] = df_original["Sensor 4"] - df_original["Sensor 2"]
     columns_to_compress = cr.get("columns_to_compress")
 
     """ Describe sensors basic statistics """
@@ -74,9 +74,9 @@ if __name__ == '__main__':
                      title=f"Shoulder Size vs Sensors",
                      columns_to_compress=columns_to_compress)
 
-    """ Show correlations """
-    dp.find_group_description(df_cleaned, column_name="Head Posture")
-    dp.find_group_description(df_cleaned, column_name="Shoulder Posture")
+    """ Show correlations and basic math """
+    dp.find_group_description(df_original, column_name="Head Posture")
+    dp.find_group_description(df_original, column_name="Shoulder Posture")
 
     """ Show values as clusters new functions """
     dp.visualize_clusters(df_cleaned, label_col="Head Posture")
