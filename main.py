@@ -42,7 +42,7 @@ def show_all_values(df_orig: pd.DataFrame, cols: list[str]) -> None:
 
 if __name__ == '__main__':
     """ Extract and clean data  """
-    file = "data_storage/input_data/data_22_03.csv"
+    file = cr.get("input_csv_file_path")
     df_original = pd.read_csv(file, delimiter=",")
     df_original = df_original.iloc[:4320]  # get only first 2 subjects only
     df_original.name = "With Errors"
