@@ -25,30 +25,30 @@ def rename_csv_file(name: str) -> str:
 
 
 def get_discrepancies(values: list[int]) -> dict[str, list[int]]:
-        """
-        Discrepancies are represented as dict:
-        {
-        "larger_50": [1, 2, 3],
-        "larger_100": [1, 2, 3],
-        "larger_150": [1, 2, 3],
-        }
-        """
-        def get_filter_func(threshold: int) -> Callable:
-            def filter_func(x) -> bool:
-                if x > threshold:
-                    return True
-                else:
-                    return False
+    """
+    Discrepancies are represented as dict:
+    {
+    "larger_50": [1, 2, 3],
+    "larger_100": [1, 2, 3],
+    "larger_150": [1, 2, 3],
+    }
+    """
+    def get_filter_func(threshold: int) -> Callable:
+        def filter_func(x) -> bool:
+            if x > threshold:
+                return True
+            else:
+                return False
 
-            return filter_func
+        return filter_func
 
-        larger_50  = get_filter_func(50)
-        larger_100 = get_filter_func(100)
-        larger_150 = get_filter_func(150)
+    larger_50  = get_filter_func(50)
+    larger_100 = get_filter_func(100)
+    larger_150 = get_filter_func(150)
 
-        return {"larger_50": list(filter(larger_50, values)),
-                "larger_100": list(filter(larger_100, values)),
-                "larger_150": list(filter(larger_150, values))}
+    return {"larger_50": list(filter(larger_50, values)),
+            "larger_100": list(filter(larger_100, values)),
+            "larger_150": list(filter(larger_150, values))}
 
 
 def compress_sensors_data(df: pd.DataFrame, columns: list[str]) -> list[list[float]]:

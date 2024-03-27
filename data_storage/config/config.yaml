@@ -1,3 +1,4 @@
+input_csv_file_path: "data_storage/input_data/data_22_03.csv"
 save_img_file_path: "data_storage/images/default.png"
 save_csv_file_path: "data_storage/output_data/default.csv"
 
