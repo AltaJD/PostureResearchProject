@@ -1,4 +1,4 @@
-input_csv_file_path: "data_storage/input_data/data_22_03.csv"
+input_csv_file_path: "data_storage/input_data/data_26_03.csv"
 save_img_file_path: "data_storage/images/default.png"
 save_csv_file_path: "data_storage/output_data/default.csv"
 
@@ -6,7 +6,20 @@ high_limit: 900
 low_limit: 650
 
 discrepancies_column: "Sensor 4-2"
-columns_to_compress: ["Sensor 2", "Sensor 4"]
+columns_to_compress: ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]
+correlation_map_columns: ["Width of shoulders",
+                          "Vertical distance between shoulderes and table surface (shoulder normal)",
+                          "Vertical distance between shoulderes and table surface (round shoulder)",
+                          "Vertical distance between eye level and table surface",
+                          "Vertical distance between Head posture device and table surface",
+                          "Vertical distance between Chair and the ground",
+                          "Horizational Distance (CM)",
+                          "Horizontal distance between eyes and head posture device",
+                          "Sensor 1",
+                          "Sensor 2",
+                          "Sensor 3",
+                          "Sensor 4"
+]
 
 # Labels for xyz axes for 3D clustering
 # must be the same name as column names

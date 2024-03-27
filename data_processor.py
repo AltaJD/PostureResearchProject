@@ -206,10 +206,7 @@ def find_group_description(df: pd.DataFrame, column_name: str) -> None:
         print("\n")
 
         # get correlations per group/posture
-        interested_cols = ["Sensor 1",
-                           "Sensor 2",
-                           "Sensor 3",
-                           "Sensor 4"]
+        interested_cols = cr.get("correlation_map_columns")
         note = column_name.split()[0]+f"_{str(group_name)}"
         show_corr_map(df_grouped[interested_cols], notes=note)
 
@@ -261,9 +258,9 @@ def show_corr_map(df: pd.DataFrame, notes=None) -> None:
         return result
 
     """ Show correlation map using seaborn """
-    new_cols = formatted_columns(df.columns)
-    df_copied = df.rename(columns=new_cols)
-    correlation_matrix: pd.DataFrame = df_copied.corr(method="pearson")
+    # new_cols = formatted_columns(df.columns)
+    # df_copied = df.rename(columns=new_cols)
+    correlation_matrix: pd.DataFrame = df.corr(method="pearson")
     sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
     title = "Corr Map"
     # plt.show()
@@ -275,6 +272,7 @@ def show_corr_map(df: pd.DataFrame, notes=None) -> None:
     plt.title(title)
     plt.savefig(file_path)
     plt.close()
+    correlation_matrix.to_csv(rename_csv_file(title+'.csv'))
 
 
 def show_subplots(data: dict, title: str, columns_to_compress: list[str]) -> None:

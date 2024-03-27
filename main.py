@@ -44,7 +44,7 @@ if __name__ == '__main__':
     """ Extract and clean data  """
     file = cr.get("input_csv_file_path")
     df_original = pd.read_csv(file, delimiter=",")
-    df_original = df_original.iloc[:4320]  # get only first 2 subjects only
+    # df_original = df_original.iloc[:4320]  # get only first 2 subjects only
     df_original.name = "With Errors"
     dc.strip_columns(df_original)
     df_original[cr.get("discrepancies_column")] = df_original["Sensor 4"] - df_original["Sensor 2"]
@@ -84,6 +84,8 @@ if __name__ == '__main__':
 
     """ Show information per subject """
     # show_data_per_subject(df_passed=df_original)
+    columns = cr.get("correlation_map_columns")
+    dp.show_corr_map(df_original[columns], notes="ALL")
 
     """ Show clusters per shoulder width """
     groups = df_cleaned.groupby("Size")
