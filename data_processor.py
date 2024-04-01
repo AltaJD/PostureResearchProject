@@ -344,3 +344,39 @@ def show_bar_chart(data, title: str) -> None:
     # plt.show()
     plt.savefig(rename_img_file(title))
     plt.close()
+
+
+def calculate_discrepancies_column(df: pd.DataFrame, column_name: str) -> None:
+    """ Add (inplace) the column with discrepancies """
+    first_col = column_name.split("-")[0].strip()
+    second_col = first_col.split(" ")[0] + " " + column_name.split("-")[1].strip()
+    df[cr.get("discrepancies_column")] = df[first_col] - df[second_col]
+
+
+def show_one_plot_grouped_by(df: pd.DataFrame, grouping_col_name: str) -> None:
+    """ Show subplots between the postures and values of other columns """
+    import seaborn as sns
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    # Group the data by head posture
+    grouped_data = df.groupby(grouping_col_name).mean().reset_index()
+
+    # Reshape the data to long format
+    melted_data = pd.melt(grouped_data, id_vars=[grouping_col_name], var_name='Measurement', value_name='Value')
+
+    # Plot the data
+    plt.figure(figsize=(10, 12))
+    sns.lineplot(data=melted_data, x=grouping_col_name, y='Value', hue='Measurement', marker='o')
+
+    # Set the plot title and labels
+    plt.title('Measurements Grouped by Head Posture')
+    plt.xlabel(grouping_col_name)
+    plt.ylabel('Measurement')
+
+    # Rotate the x-axis labels for better visibility
+    plt.xticks(rotation=30)
+
+    # Show the plot
+    # plt.show()
+    plt.savefig(rename_img_file(name=f"Posture vs Others params ({df.name})"))
