@@ -5,6 +5,9 @@ import config_reader as cr
 
 
 def main() -> None:
+    def save_df(df: pd.DataFrame, file_name: str) -> None:
+        df.to_csv(dp.rename_csv_file(file_name))
+
     def show_discrepancies(df: pd.DataFrame, category=None) -> None:
         column_name = cr.get("discrepancies_column")
         discrepancies_data: dict[str, list[int]] = dp.get_discrepancies(df[column_name].tolist())
@@ -51,6 +54,7 @@ def main() -> None:
     dp.describe_sensors_values(df_original)  # includes errors
     df_cleaned: pd.DataFrame = dc.exclude_errors(df_original)
     df_cleaned.name = "No Errors"
+    save_df(df_cleaned, "Cleaned Dataframe")
     dp.describe_sensors_values(df_cleaned)  # excludes error
 
     print('\n')
@@ -59,10 +63,6 @@ def main() -> None:
     print('\n')
 
     show_all_values(df_original, cols=sensor_columns)
-
-    """ Save DF """
-    # file = "data_storage/output_data/df_cleaned.csv"
-    # df_cleaned.to_csv(file)
 
     size_data = dp.get_compressed_data_group(df_cleaned,
                                              group_column=f"Size",
@@ -80,9 +80,11 @@ def main() -> None:
     dp.visualize_clusters(df_cleaned, label_col="Shoulder Posture")
 
     """ Show information per subject """
-    # show_data_per_subject(df_passed=df_original, sensor_cols=sensor_columns)
+    show_data_per_subject(df_passed=df_original, sensor_cols=sensor_columns)
     columns = cr.get("correlation_map_columns")
-    dp.show_corr_map(df_original[columns], notes="ALL")
+
+    dp.show_corr_map(df_original[columns], notes=f"All Parameters ({df_original.name})")
+    dp.show_corr_map(df_cleaned[columns], notes=f"All Parameters ({df_cleaned.name})")
 
     """ Show clusters per shoulder width """
     groups = df_cleaned.groupby("Size")
@@ -107,11 +109,10 @@ def main() -> None:
             "Vertical distance between Head posture device and table surface",
             "Vertical distance between Chair and the ground",
             "Horizational Distance (CM)",
-            "Horizontal distance between eyes and head posture device",
-            "Head Posture"]
-    df_sorted = df_cleaned[cols]
-    df_sorted.name = "No Errors"
-    dp.show_one_plot_grouped_by(df_sorted, grouping_col_name="Head Posture")
+            "Horizontal distance between eyes and head posture device"
+            ]
+    dp.show_one_plot_grouped_by(df_cleaned, grouping_col_name="Head Posture", cols_to_process=cols)
+    dp.show_one_plot_grouped_by(df_cleaned, grouping_col_name="Shoulder Posture", cols_to_process=cols)
 
 
 if __name__ == '__main__':

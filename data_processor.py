@@ -261,8 +261,10 @@ def show_corr_map(df: pd.DataFrame, notes=None) -> None:
     # new_cols = formatted_columns(df.columns)
     # df_copied = df.rename(columns=new_cols)
     correlation_matrix: pd.DataFrame = df.corr(method="pearson")
+    correlation_matrix = correlation_matrix.round(decimals=2)
     sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
     title = "Corr Map"
+    plt.figure(figsize=(15, 15))
     # plt.show()
     file_path = rename_img_file(title)
     if notes is not None:
@@ -353,11 +355,12 @@ def calculate_discrepancies_column(df: pd.DataFrame, column_name: str) -> None:
     df[cr.get("discrepancies_column")] = df[first_col] - df[second_col]
 
 
-def show_one_plot_grouped_by(df: pd.DataFrame, grouping_col_name: str) -> None:
+def show_one_plot_grouped_by(df_passed: pd.DataFrame, grouping_col_name: str, cols_to_process: list[str]) -> None:
     """ Show subplots between the postures and values of other columns """
-    import seaborn as sns
-    import pandas as pd
-    import matplotlib.pyplot as plt
+    columns: list[str] = cols_to_process.copy()
+    columns.append(grouping_col_name)
+    df = df_passed[columns]
+    df.name = df_passed.name
 
     # Group the data by head posture
     grouped_data = df.groupby(grouping_col_name).mean().reset_index()
@@ -371,7 +374,7 @@ def show_one_plot_grouped_by(df: pd.DataFrame, grouping_col_name: str) -> None:
 
     # Set the plot title and labels
     plt.title('Measurements Grouped by Head Posture')
-    plt.xlabel(grouping_col_name)
+    # plt.xlabel(grouping_col_name)
     plt.ylabel('Measurement')
 
     # Rotate the x-axis labels for better visibility
@@ -379,4 +382,4 @@ def show_one_plot_grouped_by(df: pd.DataFrame, grouping_col_name: str) -> None:
 
     # Show the plot
     # plt.show()
-    plt.savefig(rename_img_file(name=f"Posture vs Others params ({df.name})"))
+    plt.savefig(rename_img_file(name=f"{grouping_col_name} vs Others params ({df.name})"))
