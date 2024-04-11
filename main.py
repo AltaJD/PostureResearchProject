@@ -42,25 +42,24 @@ def main() -> None:
                          columns_to_compress=cols)
 
     """ Extract and clean data  """
-    file = cr.get("input_csv_file_path")
-    multiple_paths = ['data_storage/input_data/data_S11-S15_10_04.csv',
-                      'data_storage/input_data/data_S16-S18_10_04.csv'
-                      ]
-    # df_original = pd.read_csv(file, delimiter=",")
-    df_original = dp.get_df_from_multiple_inputs(paths=multiple_paths)
+    # file = cr.get("input_csv_file_path")
+    # df_original = pd.read_csv(file)
     # df_original = df_original.iloc[:4320]  # get only first 2 subjects only
+
+    multiple_paths = ['data_storage/input_data/data_S11-S15_10_04.csv',
+                      'data_storage/input_data/data_S16-S18_10_04.csv']
+    df_original = dp.get_df_from_multiple_inputs(paths=multiple_paths)
     df_original.name = "With Errors"
     dc.strip_columns(df_original)
     dp.calculate_discrepancies_column(df=df_original, column_name=cr.get("discrepancies_column"))
     sensor_columns = cr.get("sensor_columns")
-
-    """ Describe sensors basic statistics """
-    dp.describe_sensors_values(df_original)  # includes errors
     df_cleaned: pd.DataFrame = dc.exclude_errors(df_original)
     df_cleaned.name = "No Errors"
     save_df(df_cleaned, "Cleaned Dataframe")
-    dp.describe_sensors_values(df_cleaned)  # excludes error
 
+    """ Describe sensors basic statistics """
+    dp.describe_sensors_values(df_original)  # includes errors
+    dp.describe_sensors_values(df_cleaned)  # excludes error
     print('\n')
     print("Total VALID rows:\t", df_cleaned.shape[0])
     print("Total INVALID rows:\t", df_original.shape[0]-df_cleaned.shape[0])
