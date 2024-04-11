@@ -17,8 +17,8 @@ def main() -> None:
             title_bar = f"Discrepancies ({df.name})"
         dp.show_bar_chart(discrepancies_data, title=title_bar)
 
-    def show_data_per_subject(df_passed: pd.DataFrame, sensor_cols: list[str], test=False) -> None:
-        dataframes_subjects = dp.split_per_person(df=df_passed, num_splits=5)
+    def show_data_per_subject(df_passed: pd.DataFrame, sensor_cols: list[str], subjects_num: int, test=False) -> None:
+        dataframes_subjects = dp.split_per_person(df=df_passed, num_splits=subjects_num)
         for i, df in enumerate(dataframes_subjects):
             subject_num = f"Subject {i+1}"
             print(subject_num)
@@ -43,7 +43,11 @@ def main() -> None:
 
     """ Extract and clean data  """
     file = cr.get("input_csv_file_path")
-    df_original = pd.read_csv(file, delimiter=",")
+    multiple_paths = ['data_storage/input_data/data_S11-S15_10_04.csv',
+                      'data_storage/input_data/data_S16-S18_10_04.csv'
+                      ]
+    # df_original = pd.read_csv(file, delimiter=",")
+    df_original = dp.get_df_from_multiple_inputs(paths=multiple_paths)
     # df_original = df_original.iloc[:4320]  # get only first 2 subjects only
     df_original.name = "With Errors"
     dc.strip_columns(df_original)
@@ -80,9 +84,10 @@ def main() -> None:
     dp.visualize_clusters(df_cleaned, label_col="Shoulder Posture")
 
     """ Show information per subject """
-    show_data_per_subject(df_passed=df_original, sensor_cols=sensor_columns)
-    columns = cr.get("correlation_map_columns")
+    show_data_per_subject(df_passed=df_cleaned, sensor_cols=sensor_columns, subjects_num=8)
 
+    """ Show Correlation Maps """
+    columns = cr.get("correlation_map_columns")
     dp.show_corr_map(df_original[columns], notes=f"All Parameters ({df_original.name})")
     dp.show_corr_map(df_cleaned[columns], notes=f"All Parameters ({df_cleaned.name})")
 

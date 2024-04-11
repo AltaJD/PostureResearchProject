@@ -1,13 +1,13 @@
 ,Width of shoulders,Vertical distance between shoulderes and table surface (shoulder normal),Vertical distance between shoulderes and table surface (round shoulder),Vertical distance between eye level and table surface,Vertical distance between Head posture device and table surface,Vertical distance between Chair and the ground,Horizational Distance (CM),Horizontal distance between eyes and head posture device,Sensor 1,Sensor 2,Sensor 3,Sensor 4
-Width of shoulders,1.0,-0.79,-0.78,-0.67,,-0.7,-0.0,-0.34,0.06,-0.04,0.13,0.65
-Vertical distance between shoulderes and table surface (shoulder normal),-0.79,1.0,0.96,0.96,,0.87,-0.0,0.22,-0.19,-0.0,-0.2,-0.64
-Vertical distance between shoulderes and table surface (round shoulder),-0.78,0.96,1.0,0.94,,0.74,-0.0,0.24,-0.26,0.02,-0.24,-0.69
-Vertical distance between eye level and table surface,-0.67,0.96,0.94,1.0,,0.71,-0.0,0.16,-0.16,0.03,-0.16,-0.57
-Vertical distance between Head posture device and table surface,,,,,,,,,,,,
-Vertical distance between Chair and the ground,-0.7,0.87,0.74,0.71,,1.0,-0.0,0.21,-0.2,-0.08,-0.22,-0.55
-Horizational Distance (CM),-0.0,-0.0,-0.0,-0.0,,-0.0,1.0,0.9,0.83,0.52,0.89,0.58
-Horizontal distance between eyes and head posture device,-0.34,0.22,0.24,0.16,,0.21,0.9,1.0,0.69,0.45,0.73,0.26
-Sensor 1,0.06,-0.19,-0.26,-0.16,,-0.2,0.83,0.69,1.0,0.55,0.97,0.75
-Sensor 2,-0.04,-0.0,0.02,0.03,,-0.08,0.52,0.45,0.55,1.0,0.55,0.36
-Sensor 3,0.13,-0.2,-0.24,-0.16,,-0.22,0.89,0.73,0.97,0.55,1.0,0.77
-Sensor 4,0.65,-0.64,-0.69,-0.57,,-0.55,0.58,0.26,0.75,0.36,0.77,1.0
+Width of shoulders,1.0,0.34,0.24,0.9,-0.47,-0.45,-0.0,0.02,0.27,0.04,0.24,0.31
+Vertical distance between shoulderes and table surface (shoulder normal),0.34,1.0,0.78,0.39,-0.01,-0.43,-0.0,0.0,0.06,-0.01,0.08,0.05
+Vertical distance between shoulderes and table surface (round shoulder),0.24,0.78,1.0,0.32,-0.1,-0.06,-0.0,-0.03,-0.04,0.01,-0.01,-0.04
+Vertical distance between eye level and table surface,0.9,0.39,0.32,1.0,-0.35,-0.6,-0.0,0.08,0.16,0.03,0.14,0.2
+Vertical distance between Head posture device and table surface,-0.47,-0.01,-0.1,-0.35,1.0,-0.31,-0.0,0.13,0.06,0.07,0.02,0.17
+Vertical distance between Chair and the ground,-0.45,-0.43,-0.06,-0.6,-0.31,1.0,0.0,-0.07,-0.14,-0.03,-0.1,-0.17
+Horizational Distance (CM),-0.0,-0.0,-0.0,-0.0,-0.0,0.0,1.0,0.91,0.78,0.22,0.78,0.65
+Horizontal distance between eyes and head posture device,0.02,0.0,-0.03,0.08,0.13,-0.07,0.91,1.0,0.8,0.24,0.79,0.74
+Sensor 1,0.27,0.06,-0.04,0.16,0.06,-0.14,0.78,0.8,1.0,0.26,0.98,0.93
+Sensor 2,0.04,-0.01,0.01,0.03,0.07,-0.03,0.22,0.24,0.26,1.0,0.26,0.24
+Sensor 3,0.24,0.08,-0.01,0.14,0.02,-0.1,0.78,0.79,0.98,0.26,1.0,0.9
+Sensor 4,0.31,0.05,-0.04,0.2,0.17,-0.17,0.65,0.74,0.93,0.24,0.9,1.0

@@ -3,7 +3,7 @@ save_img_file_path: "data_storage/images/default.png"
 save_csv_file_path: "data_storage/output_data/default.csv"
 
 high_limit: 900
-low_limit: 650
+low_limit: 550
 
 discrepancies_column: "Sensor 4-2"
 sensor_columns: ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]

@@ -154,6 +154,7 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
     cleaned_data_lengths = get_lengths(sensors_values=cleaned_data)
     df_stats = convert_to_dataframe(orig_data_lengths, cleaned_data_lengths)
     df_stats.to_csv(rename_csv_file(f"sensor_accuracy_data_{df.name}.csv"), index=False)
+    print(df_stats)
 
 
 def find2_correlations(df: pd.DataFrame, col1: str, col2: str) -> None:
@@ -264,7 +265,6 @@ def show_corr_map(df: pd.DataFrame, notes=None) -> None:
     correlation_matrix = correlation_matrix.round(decimals=2)
     sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
     title = "Corr Map"
-    plt.figure(figsize=(15, 15))
     # plt.show()
     file_path = rename_img_file(title)
     if notes is not None:
@@ -383,3 +383,13 @@ def show_one_plot_grouped_by(df_passed: pd.DataFrame, grouping_col_name: str, co
     # Show the plot
     # plt.show()
     plt.savefig(rename_img_file(name=f"{grouping_col_name} vs Others params ({df.name})"))
+
+
+def get_df_from_multiple_inputs(paths: list[str]) -> pd.DataFrame:
+    """ Appends multiple dfs into one """
+    dfs = []
+    for path in paths:
+        df = pd.read_csv(path)
+        dfs.append(df)
+    return pd.concat(dfs, ignore_index=True)
+
