@@ -24,6 +24,11 @@ def rename_csv_file(name: str) -> str:
     return file_path
 
 
+def get_date_from_name(name):
+    date: str = name.split('_')[-1].split('.')[0]+"_"+name.split('_')[-2]
+    return date
+
+
 def get_discrepancies(values: list[int]) -> dict[str, list[int]]:
     """
     Discrepancies are represented as dict:
@@ -101,7 +106,7 @@ def get_compressed_data_group(df: pd.DataFrame, group_column: str, columns_to_co
     return result
 
 
-def describe_sensors_values(df: pd.DataFrame) -> None:
+def describe_sensors_values(df: pd.DataFrame, file_name=None) -> None:
     """
     1. Shows the percentage of valid values over all received values
     Assumption: error values are considered to be outside of range [lr, hr]
@@ -140,7 +145,7 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
         return pd.DataFrame.from_dict(compressed_data)
 
     """ Show general statistics """
-    sensor_columns = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]  # name of the columns containing the values
+    sensor_columns = cr.get('sensor_columns')  # name of the columns containing the values
     interested_characteristics = ["count", "mean", "min", "max", "std"]
     df_sensors = df[sensor_columns]
     df_sensors = df_sensors.describe()
@@ -153,7 +158,11 @@ def describe_sensors_values(df: pd.DataFrame) -> None:
     cleaned_data = [filtered_list_from_errors(values) for values in data]
     cleaned_data_lengths = get_lengths(sensors_values=cleaned_data)
     df_stats = convert_to_dataframe(orig_data_lengths, cleaned_data_lengths)
-    df_stats.to_csv(rename_csv_file(f"sensor_accuracy_data_{df.name}.csv"), index=False)
+    if file_name is None:
+        date = get_date_from_name(cr.get("input_csv_file_path"))
+    else:
+        date = get_date_from_name(file_name)
+    df_stats.to_csv(rename_csv_file(f"sensor_accuracy_data_{df.name}_{date}.csv"), index=False)
     print(df_stats)
 
 
@@ -393,3 +402,18 @@ def get_df_from_multiple_inputs(paths: list[str]) -> pd.DataFrame:
         dfs.append(df)
     return pd.concat(dfs, ignore_index=True)
 
+
+def plot_sensor_accuracies() -> None:
+    """ Plot the multiple graphs of how the values differ from time to time """
+    # TODO: implement the function
+    pass
+
+
+def plot_sensor_accuracies_per_hr() -> None:
+    # TODO: implement the function
+    pass
+
+
+def plot_sensor_accuracies_per_hr() -> None:
+    # TODO: implement the function
+    pass

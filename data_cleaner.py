@@ -1,4 +1,5 @@
 import pandas as pd
+import config_reader as cr
 
 
 def strip_columns(data: pd.DataFrame) -> None:
@@ -15,15 +16,22 @@ def strip_columns(data: pd.DataFrame) -> None:
 def exclude_errors(df: pd.DataFrame) -> pd.DataFrame:
     """ Exclude rows that includes the sensor values below 650 and higher than 900 """
     # configure attributes containing error values
-    columns = ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]
+    columns = cr.get('sensor_columns')
     # define range of appropriate range of values
     lr = 650  # low range
     hr = 900  # high range
     # Exclude rows with values outside the range
-    filtered_df = df[
-        (df[columns[0]].between(lr, hr)) &
-        (df[columns[1]].between(lr, hr)) &
-        (df[columns[2]].between(lr, hr)) &
-        (df[columns[3]].between(lr, hr))
-    ]
+    if len(columns) == 3:
+        filtered_df = df[
+            (df[columns[0]].between(lr, hr)) &
+            (df[columns[1]].between(lr, hr)) &
+            (df[columns[2]].between(lr, hr))
+        ]
+    else:
+        filtered_df = df[
+            (df[columns[0]].between(lr, hr)) &
+            (df[columns[1]].between(lr, hr)) &
+            (df[columns[2]].between(lr, hr)) &
+            (df[columns[3]].between(lr, hr))
+        ]
     return filtered_df

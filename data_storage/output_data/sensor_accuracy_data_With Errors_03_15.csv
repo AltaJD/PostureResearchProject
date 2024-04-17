@@ -1,0 +1,5 @@
+Sensor,Accuracy (%),Out of Range (%),Valid Values,Invalid Values,Total Values
+Sensor 1,70.07,29.93,3027,1293,4320
+Sensor 2,73.01,26.99,3154,1166,4320
+Sensor 3,86.41,13.59,3733,587,4320
+Sensor 4,90.35,9.65,3903,417,4320

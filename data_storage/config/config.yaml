@@ -5,7 +5,7 @@ save_csv_file_path: "data_storage/output_data/default.csv"
 high_limit: 900
 low_limit: 550
 
-discrepancies_column: "Sensor 4-2"
+discrepancies_column: "Sensor 2-1"
 sensor_columns: ["Sensor 1", "Sensor 2", "Sensor 3", "Sensor 4"]
 correlation_map_columns: ["Width of shoulders",
                           "Vertical distance between shoulderes and table surface (shoulder normal)",
@@ -18,7 +18,6 @@ correlation_map_columns: ["Width of shoulders",
                           "Sensor 1",
                           "Sensor 2",
                           "Sensor 3",
-                          "Sensor 4"
 ]
 
 # Labels for xyz axes for 3D clustering
