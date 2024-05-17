@@ -1,0 +1,5 @@
+1. Show multiple lines on one graph with legends (DONE)
+2. Create alarm detection and show it on the graph
+3. Change position of the buttons and the graph
+4. Create a simple database for storing user data.
+5. Add data retrieve method
