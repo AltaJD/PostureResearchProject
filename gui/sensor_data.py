@@ -69,9 +69,11 @@ def main_test():
                    }
     test_proc.app.sensor_values = sample_data
     # Add elements
-    test_proc.app.add_button(text="Stop Graph", func=test_proc.interrupt)
-    test_proc.app.add_button(text="Close APP", func=test_proc.close_app)
-    test_proc.app.add_alarms_label("Number of Alarms", str(0))
+    test_proc.app.add_control_button(text="Stop Graph", func=test_proc.interrupt)
+    test_proc.app.add_control_button(text="Close APP", func=test_proc.close_app)
+    test_proc.app.add_control_button(text="Save Data", func=test_proc.app.do_nothing)
+    test_proc.app.create_alarms_label("Number of Alarms", str(0))
+    test_proc.app.create_clock_label("Processing Time")
     test_proc.run()
 
 

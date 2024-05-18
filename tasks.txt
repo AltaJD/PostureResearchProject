@@ -1,5 +1,10 @@
 1. Show multiple lines on one graph with legends (DONE)
 2. Create alarm detection and show it on the graph
-3. Change position of the buttons and the graph
+2.1 Add time to determine processing time (DONE)
+3. Change position of the buttons and the graph (DONE)
 4. Create a simple database for storing user data.
 5. Add data retrieve method
+6. Add sing-in/sign-out methods
+
+
+last. Code Refactoring (Add UI config)
