@@ -5,6 +5,7 @@
 4. Create a simple database for storing user data.
 5. Add data retrieve method
 6. Add sing-in/sign-out methods
+7. Improve the design
 
 
 last. Code Refactoring (Add UI config)

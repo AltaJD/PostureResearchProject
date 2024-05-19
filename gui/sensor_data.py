@@ -1,6 +1,7 @@
 import threading
 from app import App
 import time
+import ui_config
 
 
 class DataProcessor:
@@ -34,6 +35,18 @@ class DataProcessor:
     def interrupt(self):
         self.app.is_stopped = True
 
+    def pause(self):
+        self.app.is_paused = True
+        button = self.app.control_buttons[ui_config.ElementNames.pause_button_txt.value]
+        resume_txt: str = ui_config.ElementNames.resume_button_txt.value
+        button.config(text=resume_txt, command=self.resume)
+
+    def resume(self):
+        self.app.is_paused = False
+        button = self.app.control_buttons[ui_config.ElementNames.pause_button_txt.value]
+        stop_txt: str = ui_config.ElementNames.pause_button_txt.value
+        button.config(text=stop_txt, command=self.pause)
+
     def close_app(self):
         self.interrupt()
         self.app.destroy()
@@ -42,7 +55,8 @@ class DataProcessor:
         """ Connect to the COM port """
         # TODO: Add communication with COM port
         while not self.app.is_stopped:
-            self.parse_data(data)
+            if not self.app.is_paused:
+                self.parse_data(data)
             time.sleep(0.5)
         else:
             print("Data Parsing has been stopped")
@@ -69,9 +83,11 @@ def main_test():
                    }
     test_proc.app.sensor_values = sample_data
     # Add elements
-    test_proc.app.add_control_button(text="Stop Graph", func=test_proc.interrupt)
-    test_proc.app.add_control_button(text="Close APP", func=test_proc.close_app)
-    test_proc.app.add_control_button(text="Save Data", func=test_proc.app.do_nothing)
+    button1_txt: str = ui_config.ElementNames.pause_button_txt.value
+    button2_txt: str = ui_config.ElementNames.close_button_txt.value
+    test_proc.app.add_control_button(text=button1_txt, func=test_proc.pause)
+    test_proc.app.add_control_button(text=button2_txt, func=test_proc.close_app)
+    test_proc.app.add_control_button(text="Save Data", func=test_proc.app.save_data)
     test_proc.app.create_alarms_label("Number of Alarms", str(0))
     test_proc.app.create_clock_label("Processing Time")
     test_proc.run()

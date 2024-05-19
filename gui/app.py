@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timedelta
 from PIL import Image, ImageTk
 import ui_config
+from database_manager import DatabaseManager
 
 
 class TkCustomImage:
@@ -47,9 +48,12 @@ class App(tk.Tk):
     """
     def __init__(self, title: str):
         super().__init__()
+        # Standard variables
         self.sensor_values = dict()
         self.button_num = 0
+        self.menu_button_num = 0
         self.is_stopped = False
+        self.is_paused = False
         self.graph_size = (12, 4)
         self.info_panel_wnum = 0
         # Structure of each frame
@@ -68,7 +72,8 @@ class App(tk.Tk):
         self.graph_canvas = None
         self.graph_ax = None
         self.func_ani = None
-        self.graph_lines = []  # list of lines
+        self.graph_lines = list()  # list of lines
+        self.control_buttons = dict()
         # Set up frames and objects
         self.create_major_frames()
         self.add_header_elements(title=ui_config.ElementNames.app_title.value)
@@ -76,19 +81,21 @@ class App(tk.Tk):
         # Update app attributes
         self.title(title)
         self.attributes("-fullscreen", True)
+        self.db_manager = DatabaseManager()
 
     def create_major_frames(self):
-        self.header_frame.pack(fill='both', expand=True)
+        self.header_frame.pack(fill='both', expand=False)
         self.body_frame.pack(fill='both', expand=True)
-        self.footer_frame.pack(fill='both', expand=True)
-        self.header_frame.config(bg='red')
+        self.footer_frame.pack(fill='both', expand=False)
+        self.header_frame.config(bg='red', height=ui_config.Measurements.header_h.value)
         self.body_frame.config(bg='white')
-        self.footer_frame.config(bg='green')
+        self.footer_frame.config(bg='green', height=ui_config.Measurements.footer_h.value)
 
     def add_header_elements(self, title: str):
         self.create_header_title(title)
         self.create_default_user_icon()
-        self.create_sign_in_button()
+        self.add_menu_button(text="Sign in", func=self.do_nothing)
+        self.add_menu_button(text="Register", func=self.do_nothing)
 
     def create_header_title(self, title: str):
         # Create header components
@@ -102,17 +109,15 @@ class App(tk.Tk):
         user_photo_label = tk.Label(self.header_frame, image=user_photo)
         user_photo_label.grid(row=self.body_row, column=0, padx=10, pady=10)
 
-    def create_sign_in_button(self):
+    def add_menu_button(self, text: str, func: Callable):
         # Add sign in button
-        sign_in_button = tk.Button(self.header_frame, text="Sign in")
-        sign_in_button.grid(row=self.body_row, column=1, padx=0, pady=10)
+        sign_in_button = tk.Button(self.header_frame, text=text, command=func)
+        sign_in_button.grid(row=self.body_row, column=self.menu_button_num+1, padx=0, pady=10)
+        self.menu_button_num += 1
 
     def add_body_elements(self):
         self.create_graph()
         self.create_control_frame()
-
-    def close(self, event=None) -> None:
-        self.is_stopped = True
 
     def run_app(self) -> None:
         self.mainloop()
@@ -201,12 +206,20 @@ class App(tk.Tk):
         clock.pack(fill="both", expand=True)
         self.info_panel_wnum += 1
 
-    def add_control_button(self, text: str, func: Callable, side=None, fill=None, expand=False) -> tk.Button:
+    def add_control_button(self, text: str, func: Callable, side=None, fill=None, expand=False) -> None:
         button = tk.Button(self.control_frame, text=text, command=func)
         button.grid(row=self.button_num, column=0, padx=10, pady=10)
         self.button_num += 1
-        return button
+        # Remember the button
+        self.control_buttons[text] = button
 
+    """ Control functions """
     def do_nothing(self):
         # Function to visualize
         pass
+
+    def close(self, event=None) -> None:
+        self.is_stopped = True
+
+    def save_data(self):
+        self.db_manager.save_data(data=self.sensor_values, user_id=0)
