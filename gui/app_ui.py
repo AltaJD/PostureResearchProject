@@ -22,7 +22,7 @@ class App(tk.Tk):
         super().__init__()
         # Update app attributes
         self.title(title)
-        # self.attributes("-fullscreen", True)
+        self.attributes("-fullscreen", True)
         self.db_manager = DatabaseManager()
         # Standard variables
         self.sensor_values = dict()
@@ -53,6 +53,7 @@ class App(tk.Tk):
         self.figure = None
         self.func_ani = None
         self.user_photo = None
+        self.user_name = None
         self.sign_in_popup = None
         self.registration_popup = None
         self.edit_photo_popup = None
@@ -96,6 +97,11 @@ class App(tk.Tk):
                                                       row=self.body_row,
                                                       col=0)
         self.user_photo = img_label
+
+    def add_user_name_label(self, name: str, master: tk.Frame, row: int, col: int):
+        label = tk.Label(master, text=name)
+        label.grid(row=row, column=col, padx=5, pady=5)
+        self.user_name = label
 
     def add_body_elements(self):
         self.create_graph()
@@ -328,6 +334,10 @@ class App(tk.Tk):
         # Add button
         edit_button_txt = ui_config.ElementNames.edit_photo_button_txt.value
         self.add_menu_button(text=edit_button_txt, func=self.show_edit_photo_popup)
+        self.add_user_name_label(name=self.db_manager.session.full_name,
+                                 row=self.footer_row,
+                                 col=0,
+                                 master=self.header_frame)
         self.resume()
 
     def sign_out(self):

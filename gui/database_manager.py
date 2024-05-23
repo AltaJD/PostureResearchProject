@@ -15,6 +15,7 @@ class SessionInstance:
         self.first_name = None
         self.second_name = None
         self.middle_name = None
+        self.full_name = None
         self.photo_path = ui_config.FilePaths.user_photo_icon.value
 
     def update_instance(self, id, f_name: str, s_name: str, m_name: str, photo: str):
@@ -24,6 +25,7 @@ class SessionInstance:
         self.second_name = s_name
         self.middle_name = m_name
         self.photo_path = photo
+        self.full_name = self.first_name+" "+self.second_name
 
     def reset(self):
         """ Reset is used when the user signs out """
