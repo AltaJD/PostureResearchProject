@@ -33,6 +33,7 @@ class App(tk.Tk):
         self.is_paused = False
         self.graph_size = (12, 4)
         self.info_panel_wnum = 0
+        self.prev_alarm_pos = 0
         # Structure of each frame
         self.header_row = 0
         self.header_frame = tk.Frame(self)
@@ -67,9 +68,13 @@ class App(tk.Tk):
         self.header_frame.pack(fill='both', expand=False)
         self.body_frame.pack(fill='both', expand=True)
         self.footer_frame.pack(fill='both', expand=False)
-        self.header_frame.config(bg='red', height=ui_config.Measurements.header_h.value)
-        self.body_frame.config(bg='white')
-        self.footer_frame.config(bg='green', height=ui_config.Measurements.footer_h.value)
+        # Set frame configurations
+        hf_color: str = ui_config.FrameColors.header.value
+        bf_color: str = ui_config.FrameColors.body.value
+        ff_color: str = ui_config.FrameColors.footer.value
+        self.header_frame.config(bg=hf_color, height=ui_config.Measurements.header_h.value)
+        self.body_frame.config(bg=bf_color)
+        self.footer_frame.config(bg=ff_color, height=ui_config.Measurements.footer_h.value)
 
     def add_header_elements(self, title: str):
         self.create_header_title(title)
@@ -81,13 +86,15 @@ class App(tk.Tk):
         title_label.grid(row=self.header_row, column=0, padx=10, pady=10)
 
     def create_default_user_icon(self):
-        # FIXME: cannot display the image in header
-        # Add user photo
         image_path: str = ui_config.FilePaths.user_photo_icon.value
         photo_w: int = ui_config.Measurements.photo_w.value
         photo_h: int = ui_config.Measurements.photo_h.value
-        user_photo = TkCustomImage(file_path=image_path, w=photo_w, h=photo_h)
-        img_label: tk.Label = user_photo.attach_image(self.header_frame, row=self.body_row, col=0)
+        user_photo = TkCustomImage(file_path=image_path,
+                                   w=photo_w,
+                                   h=photo_h)
+        img_label: tk.Label = user_photo.attach_image(master=self.header_frame,
+                                                      row=self.body_row,
+                                                      col=0)
         self.user_photo = img_label
 
     def add_body_elements(self):
@@ -104,14 +111,13 @@ class App(tk.Tk):
         for i, sens_name in enumerate(self.sensor_values.keys()):
             x, y = self.get_axes_values(sens_name, limit=lim)
             self.graph_lines[i].set_data(x, y)
-            self.graph_ax.set_xlim(x[0], x[-1])  # FIXME
+            self.graph_ax.set_xlim(x[0], x[-1])
             lines.append(self.graph_lines[i])
-        if self.sensor_values:
+        if self.sensor_values and not self.is_paused:
             y_min = min(min(y) for y in self.sensor_values.values())
             y_max = max(max(y) for y in self.sensor_values.values())
             self.graph_ax.set_ylim(y_min, y_max)
             self.detect_anomaly(self.sensor_values)
-        if not self.is_paused:
             self.graph_canvas.draw()
         return lines
 
@@ -119,8 +125,7 @@ class App(tk.Tk):
         # Check for alarm case
         sensor_1, sensor_2, *other_sensors = tuple(data.keys())
         if abs(data[sensor_1][-1] - data[sensor_2][-1]) >= 50:
-            self.alarm_num += 1
-            self.update_alarm_num(num=self.alarm_num, pos=len(data[sensor_1])-1)
+            self.update_alarm_num(pos=len(data[sensor_1])-1)
 
     def update_sensor_values(self, new_data: dict) -> None:
         """ The new data should have the format:
@@ -132,11 +137,13 @@ class App(tk.Tk):
         self.sensor_values = new_data
         self.func_ani.event_source.start()
 
-    def update_alarm_num(self, num: int, pos: int) -> None:
-        if not self.alarm_num_label or not self.graph_ax:
+    def update_alarm_num(self, pos: int) -> None:
+        if not self.alarm_num_label or not self.graph_ax or pos == self.prev_alarm_pos:
             return None
-        self.alarm_num_label.config(text=str(num))
+        self.alarm_num += 1
+        self.alarm_num_label.config(text=str(self.alarm_num))
         self.draw_vert_span(x=pos)
+        self.prev_alarm_pos = pos
 
     def draw_vert_span(self, x: int, width=1):
         # Add a vertical span to the background
@@ -236,33 +243,24 @@ class App(tk.Tk):
     def resume_comm(self) -> None:
         self.is_paused = False
 
-    # def remove_all_v_spans(self):
-    #     if self.graph_ax:
-    #         # Get a list of all the axvspan objects
-    #         vert_spans = [c for c in self.graph_ax.collections if isinstance(c, PolyCollection)]
-    #
-    #         # Remove each axvspan object
-    #         for v_span in vert_spans:
-    #             self.graph_ax.collections.remove(v_span)
-    #
-    #         # Redraw the canvas
-    #         self.graph_canvas.draw()
-
     """ UI modification """
 
     def show_sign_in_popup(self):
+        self.pause()
         pop_up = UserDetailsWindow(self, title=ui_config.ElementNames.sign_in_popup_title.value)
         pop_up.add_button(txt="Log in", func=self.sign_in)
         pop_up.add_button(txt="Cancel", func=pop_up.close_pop_up)
         self.sign_in_popup = pop_up
 
     def show_register_popup(self):
+        self.pause()
         pop_up = UserDetailsWindow(self, title=ui_config.ElementNames.registration_popup_title.value)
         pop_up.add_button(txt="Submit", func=self.register_user)
         pop_up.add_button(txt="Cancel", func=pop_up.close_pop_up)
         self.registration_popup = pop_up
 
     def show_edit_photo_popup(self):
+        self.pause()
         popup = FileUploadWindow(self, "File Upload")
         popup.add_button(txt="Select File", func=self.select_file)
         popup.add_button(txt="Upload", func=self.submit_new_user_photo)
@@ -279,8 +277,9 @@ class App(tk.Tk):
             path: str = ui_config.FilePaths.user_photo_icon.value
         width: int = ui_config.Measurements.photo_w.value
         height: int = ui_config.Measurements.photo_h.value
-        default_image = TkCustomImage(path, w=width, h=height)
-        photo_label.configure(image=default_image.tk_image)
+        img = TkCustomImage(path, w=width, h=height)
+        photo_label.configure(image=img.tk_image)
+        photo_label.image = img.tk_image
 
     def submit_new_user_photo(self):
         popup: FileUploadWindow = self.edit_photo_popup
@@ -329,6 +328,7 @@ class App(tk.Tk):
         # Add button
         edit_button_txt = ui_config.ElementNames.edit_photo_button_txt.value
         self.add_menu_button(text=edit_button_txt, func=self.show_edit_photo_popup)
+        self.resume()
 
     def sign_out(self):
         # Forget session
@@ -349,6 +349,7 @@ class App(tk.Tk):
             popup.show_message_frame(subject="Success",
                                      details="Your personal details has been saved!\n"
                                              "Please try to sign in to your account.")
+            self.resume()
         else:
             popup.show_message_frame(subject="Error",
                                      details="User with similar personal details already exists!\n"
@@ -368,14 +369,3 @@ class App(tk.Tk):
         stop_txt: str = ui_config.ElementNames.pause_button_txt.value
         button = self.control_buttons[stop_txt]
         button.config(text=stop_txt, command=self.pause)
-
-
-if __name__ == '__main__':
-    # Example usage
-    root = tk.Tk()
-    img_path: str = ui_config.FilePaths.user_photo_icon.value
-    w = ui_config.Measurements.photo_w.value
-    h = ui_config.Measurements.photo_h.value
-    image = TkCustomImage(img_path, w, h)
-    image.attach_image(root, 0, 0)
-    root.mainloop()

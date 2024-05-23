@@ -19,7 +19,8 @@ class TkCustomImage:
 
     def attach_image(self, master, row: int, col: int) -> tk.Label:
         image_label = tk.Label(master, image=self.tk_image)
-        image_label.grid(row=row, column=col, padx=10, pady=10)
+        image_label.image = self.tk_image
+        image_label.grid(row=row, column=col, padx=5, pady=5)
         return image_label
 
 
@@ -106,7 +107,8 @@ class UserDetailsWindow(tk.Toplevel):
         details_label = tk.Label(message_frame, text=details)
         details_label.pack()
         delay: int = ui_config.Measurements.pop_up_closing_delay.value
-        self.after(delay, func=self.close_pop_up)
+        if subject != "Error":
+            self.after(delay, func=self.close_pop_up)
 
     def disable_submission_button(self):
         button: tk.Button = self.submission_button

@@ -4,6 +4,9 @@ from enum import Enum
 class FrameColors(Enum):
     graph = "red"
     control = "black"
+    header = "red"
+    body = "white"
+    footer = "green"
 
 
 class ElementNames(Enum):
@@ -42,7 +45,7 @@ class Measurements(Enum):
     graph_size = (12, 4)
     graph_padding_x = 10
     graph_padding_y = 10
-    graph_x_limit = 100  # show up to last 100 values
+    graph_x_limit = 50  # show up to last X values or None for infinite number
     header_h = 200
     footer_h = 100
 
@@ -50,7 +53,7 @@ class Measurements(Enum):
     photo_w = 50
 
     pop_up_closing_delay = 2000  # ms
-    thread_delay = 0.05  # s
+    thread_delay = 0.01  # s
 
 
 class Fonts(Enum):

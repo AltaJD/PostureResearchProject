@@ -52,14 +52,13 @@ class ThreadManager:
             print("Data Parsing has been stopped")
 
     def parse_data(self, data) -> None:
-        # TODO: implement function
         print("=== Data Parsed ===")
         # remove everything lower
         new_vals = self.app.sensor_values
         # increase values by one
         if new_vals:
             for key, value in new_vals.items():
-                some_value: int = random.randint(-100, 100)
+                some_value: int = random.randint(-30, 30)
                 value.append(some_value)
             self.app.update_sensor_values(new_vals)
 

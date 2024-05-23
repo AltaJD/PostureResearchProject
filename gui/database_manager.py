@@ -76,6 +76,7 @@ class DatabaseManager:
                        & (df["Second Name"] == second_name) \
                        & (df["Middle Name"] == middle_name)
         df = df[df_condition]
+        print(df)
         return df  # return sorted df
 
     def is_valid_sign_in(self,
@@ -83,7 +84,7 @@ class DatabaseManager:
                          middle_name: str,
                          second_name: str,
                          password: str) -> bool:
-        """ The function determines whether entered details are correct and saves them in one session instance """
+        """ The function determines whether entered details are correct and add them into one session instance """
         df_user = self.find_user_in_db(first_name, second_name, middle_name)
         if df_user.shape[0] == 0 or df_user["Password"].iloc[0] != password:
             return False
@@ -124,12 +125,11 @@ class DatabaseManager:
         return self.session.photo_path
 
     def save_new_photo_path(self, new_path: str):
-        # TODO: complete the function
         user_id: int = self.session.user_id
         df: pd.DataFrame = self.get_user_db()
         df['Photo Path'] = df['Photo Path'].astype(str)
         df.loc[user_id, 'Photo Path'] = new_path
-        df.to_csv(self.users_login_path)
+        df.to_csv(self.users_login_path, index=False)
 
     @staticmethod
     def reformat_mid_name(name: str | None) -> str:
