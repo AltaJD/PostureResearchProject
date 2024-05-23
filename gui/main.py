@@ -5,7 +5,7 @@ import ui_config
 import random
 
 
-class DataProcessor:
+class ThreadManager:
     """ The prototype consists of 2-4 sensors,
     based on their data, we create the graph in one subplot to show
     Procedure: read and store data
@@ -36,20 +36,9 @@ class DataProcessor:
     def interrupt(self):
         self.app.is_stopped = True
 
-    def pause(self):
-        self.app.is_paused = True
-        button = self.app.control_buttons[ui_config.ElementNames.pause_button_txt.value]
-        resume_txt: str = ui_config.ElementNames.resume_button_txt.value
-        button.config(text=resume_txt, command=self.resume)
-
-    def resume(self):
-        self.app.is_paused = False
-        stop_txt: str = ui_config.ElementNames.pause_button_txt.value
-        button = self.app.control_buttons[stop_txt]
-        button.config(text=stop_txt, command=self.pause)
-
     def close_app(self):
         self.interrupt()
+        time.sleep(0.1)
         self.app.destroy()
 
     def connect(self, data=None) -> None:
@@ -73,18 +62,10 @@ class DataProcessor:
                 some_value: int = random.randint(-100, 100)
                 value.append(some_value)
             self.app.update_sensor_values(new_vals)
-            self.detect_anomaly(new_vals)
-
-    def detect_anomaly(self, data: dict):
-        # Check for alarm case
-        sensor_1, sensor_2, *other_sensors = tuple(data.keys())
-        if abs(data[sensor_1][-1] - data[sensor_2][-1]) >= 50:
-            self.alarm_num += 1
-            self.app.update_alarm_num(num=self.alarm_num, pos=len(data[sensor_1]))
 
 
 def main_test():
-    test_proc = DataProcessor(app_title="Testing Data Validation")
+    test_proc = ThreadManager(app_title="Testing Data Validation")
     sample_data = {"Sensor 2": [2, 4, 6, 8, 10],
                    "Sensor 4": [1, 2, 3, 4, 5],
                    }
@@ -101,7 +82,7 @@ def main_test():
 
     app_ui = test_proc.app
 
-    app_ui.add_control_button(text=pause_graph_txt, func=test_proc.pause)
+    app_ui.add_control_button(text=pause_graph_txt, func=app_ui.pause)
     app_ui.add_control_button(text=close_app_txt, func=test_proc.close_app)
     app_ui.add_control_button(text=save_txt, func=app_ui.save_data)
     app_ui.add_menu_button(text=sign_in_txt, func=app_ui.show_sign_in_popup)

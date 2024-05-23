@@ -42,6 +42,7 @@ class Measurements(Enum):
     graph_size = (12, 4)
     graph_padding_x = 10
     graph_padding_y = 10
+    graph_x_limit = 100  # show up to last 100 values
     header_h = 200
     footer_h = 100
 
@@ -49,7 +50,7 @@ class Measurements(Enum):
     photo_w = 50
 
     pop_up_closing_delay = 2000  # ms
-    thread_delay = 0.1  # s
+    thread_delay = 0.05  # s
 
 
 class Fonts(Enum):
@@ -62,6 +63,6 @@ class FilePaths(Enum):
     """ Notes:
     Absolute path for user photos are preferred
     """
-    user_photo_icon = "./data/img/user_photo.png"
+    user_photo_icon = "./data/img/user_photo.jpeg"
     user_login_db_path = "./data/users/logins.csv"
     values_folder_path = "./data/values"

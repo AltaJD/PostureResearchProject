@@ -20,8 +20,13 @@ class App(tk.Tk):
     """
     def __init__(self, title: str):
         super().__init__()
+        # Update app attributes
+        self.title(title)
+        # self.attributes("-fullscreen", True)
+        self.db_manager = DatabaseManager()
         # Standard variables
         self.sensor_values = dict()
+        self.alarm_num = 0
         self.button_num = 0
         self.menu_button_num = 0
         self.is_stopped = False
@@ -44,6 +49,7 @@ class App(tk.Tk):
         self.control_frame = None
         self.graph_canvas = None
         self.graph_ax = None
+        self.figure = None
         self.func_ani = None
         self.user_photo = None
         self.sign_in_popup = None
@@ -56,10 +62,6 @@ class App(tk.Tk):
         self.create_major_frames()
         self.add_header_elements(title=ui_config.ElementNames.app_title.value)
         self.add_body_elements()
-        # Update app attributes
-        self.title(title)
-        self.attributes("-fullscreen", True)
-        self.db_manager = DatabaseManager()
 
     def create_major_frames(self):
         self.header_frame.pack(fill='both', expand=False)
@@ -79,17 +81,18 @@ class App(tk.Tk):
         title_label.grid(row=self.header_row, column=0, padx=10, pady=10)
 
     def create_default_user_icon(self):
+        # FIXME: cannot display the image in header
         # Add user photo
-        user_photo_path: str = ui_config.FilePaths.user_photo_icon.value
+        image_path: str = ui_config.FilePaths.user_photo_icon.value
         photo_w: int = ui_config.Measurements.photo_w.value
         photo_h: int = ui_config.Measurements.photo_h.value
-        user_photo: tk.PhotoImage = TkCustomImage(file_path=user_photo_path, w=photo_w, h=photo_h).tk_image
-        user_photo_label = tk.Label(self.header_frame, image=user_photo)
-        user_photo_label.grid(row=self.body_row, column=0, padx=10, pady=10)
-        self.user_photo = user_photo_label
+        user_photo = TkCustomImage(file_path=image_path, w=photo_w, h=photo_h)
+        img_label: tk.Label = user_photo.attach_image(self.header_frame, row=self.body_row, col=0)
+        self.user_photo = img_label
 
     def add_body_elements(self):
         self.create_graph()
+        self.start_graph_refreshing()
         self.create_control_frame()
 
     def run_app(self) -> None:
@@ -97,16 +100,27 @@ class App(tk.Tk):
 
     def update_graph(self, frame=None) -> list:
         lines = []
+        lim: int = ui_config.Measurements.graph_x_limit.value
         for i, sens_name in enumerate(self.sensor_values.keys()):
-            x, y = self.get_axes_values(sens_name)
+            x, y = self.get_axes_values(sens_name, limit=lim)
             self.graph_lines[i].set_data(x, y)
-            self.graph_ax.set_xlim(0, len(x) - 1)
+            self.graph_ax.set_xlim(x[0], x[-1])  # FIXME
             lines.append(self.graph_lines[i])
         if self.sensor_values:
             y_min = min(min(y) for y in self.sensor_values.values())
             y_max = max(max(y) for y in self.sensor_values.values())
             self.graph_ax.set_ylim(y_min, y_max)
+            self.detect_anomaly(self.sensor_values)
+        if not self.is_paused:
+            self.graph_canvas.draw()
         return lines
+
+    def detect_anomaly(self, data: dict):
+        # Check for alarm case
+        sensor_1, sensor_2, *other_sensors = tuple(data.keys())
+        if abs(data[sensor_1][-1] - data[sensor_2][-1]) >= 50:
+            self.alarm_num += 1
+            self.update_alarm_num(num=self.alarm_num, pos=len(data[sensor_1])-1)
 
     def update_sensor_values(self, new_data: dict) -> None:
         """ The new data should have the format:
@@ -122,8 +136,21 @@ class App(tk.Tk):
         if not self.alarm_num_label or not self.graph_ax:
             return None
         self.alarm_num_label.config(text=str(num))
+        self.draw_vert_span(x=pos)
+
+    def draw_vert_span(self, x: int, width=1):
         # Add a vertical span to the background
-        self.graph_ax.axvspan(pos, pos+1, facecolor='red', alpha=0.5, zorder=1)  # FIXME
+        self.graph_ax.axvspan(x-width/2, x+width/2, facecolor='red', alpha=0.2, zorder=1)
+
+    def draw_graph_arrow(self, x: int, height: int):
+        # Draw the arrow
+        y_min = min(min(y) for y in self.sensor_values.values())
+        self.graph_ax.annotate('',
+                               xy=(x, y_min),
+                               xytext=(x, y_min + height),
+                               arrowprops=dict(arrowstyle='->',
+                                               color='r',
+                                               linewidth=2))
 
     def create_control_frame(self):
         frame = tk.Frame(self.body_frame)
@@ -136,26 +163,30 @@ class App(tk.Tk):
         self.graph_frame = gf  # remember the object
         sensor_names: list[str] = ui_config.ElementNames.sensor_names.value
         fig = Figure(figsize=self.graph_size, dpi=100)
-        self.graph_ax = fig.add_subplot(111)
-        self.graph_ax.set_xlabel("Num of Data")
-        self.graph_ax.set_ylabel("Distance")
-        self.graph_ax.set_title("Sensors Data")
+        ax = fig.add_subplot(111)
+        ax.set_xlabel("Num of Data")
+        ax.set_ylabel("Distance")
+        ax.set_title("Sensors Data")
+        lim: int = ui_config.Measurements.graph_x_limit.value
         for sensor_name in sensor_names:
-            x, y = self.get_axes_values(sensor_name)
-            line, = self.graph_ax.plot(x, y, label=sensor_name)
+            x, y = self.get_axes_values(sensor_name, limit=lim)
+            line, = ax.plot(x, y, label=sensor_name)
             self.graph_lines.append(line)
-        self.graph_ax.legend()
+        ax.legend()
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-        self.func_ani = FuncAnimation(fig, self.update_graph, interval=50, blit=True)  # remember the object
         self.graph_canvas = canvas  # remember the object
+        self.figure = fig
+        self.graph_ax = ax
 
-    def get_axes_values(self, sensor: str):
+    def get_axes_values(self, sensor: str, limit=None):
         if self.sensor_values.get(sensor):
             x = list(range(len(self.sensor_values[sensor])))
             y = self.sensor_values[sensor]
+            if limit and len(y) > limit:
+                x = x[-limit:]
+                y = y[-limit:]
         else:
             x = [0]
             y = [0]
@@ -204,6 +235,18 @@ class App(tk.Tk):
 
     def resume_comm(self) -> None:
         self.is_paused = False
+
+    # def remove_all_v_spans(self):
+    #     if self.graph_ax:
+    #         # Get a list of all the axvspan objects
+    #         vert_spans = [c for c in self.graph_ax.collections if isinstance(c, PolyCollection)]
+    #
+    #         # Remove each axvspan object
+    #         for v_span in vert_spans:
+    #             self.graph_ax.collections.remove(v_span)
+    #
+    #         # Redraw the canvas
+    #         self.graph_canvas.draw()
 
     """ UI modification """
 
@@ -288,7 +331,6 @@ class App(tk.Tk):
         self.add_menu_button(text=edit_button_txt, func=self.show_edit_photo_popup)
 
     def sign_out(self):
-        # TODO: show main page and pause the comm with the sensor
         # Forget session
         self.db_manager.session.reset()
         self.set_user_photo()
@@ -312,6 +354,21 @@ class App(tk.Tk):
                                      details="User with similar personal details already exists!\n"
                                              "Please try to sign in.")
 
+    def start_graph_refreshing(self):
+        self.func_ani = FuncAnimation(self.figure, self.update_graph, interval=50, blit=True)  # remember the object
+
+    def pause(self):
+        self.is_paused = True
+        button = self.control_buttons[ui_config.ElementNames.pause_button_txt.value]
+        resume_txt: str = ui_config.ElementNames.resume_button_txt.value
+        button.config(text=resume_txt, command=self.resume)
+
+    def resume(self):
+        self.is_paused = False
+        stop_txt: str = ui_config.ElementNames.pause_button_txt.value
+        button = self.control_buttons[stop_txt]
+        button.config(text=stop_txt, command=self.pause)
+
 
 if __name__ == '__main__':
     # Example usage
@@ -320,5 +377,5 @@ if __name__ == '__main__':
     w = ui_config.Measurements.photo_w.value
     h = ui_config.Measurements.photo_h.value
     image = TkCustomImage(img_path, w, h)
-    image.show_image(root, 0, 0)
+    image.attach_image(root, 0, 0)
     root.mainloop()

@@ -17,9 +17,10 @@ class TkCustomImage:
         self.scaled_image = self.original_image.resize((w, h), resample=Image.LANCZOS)
         self.tk_image = ImageTk.PhotoImage(image=self.scaled_image)
 
-    def show_image(self, master: tk.Tk, row: int, col: int):
+    def attach_image(self, master, row: int, col: int) -> tk.Label:
         image_label = tk.Label(master, image=self.tk_image)
-        image_label.grid(row=row, column=col)
+        image_label.grid(row=row, column=col, padx=10, pady=10)
+        return image_label
 
 
 class Clock(tk.Frame):
