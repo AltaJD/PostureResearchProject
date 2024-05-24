@@ -28,7 +28,7 @@ The application should encrypt user passwords for better security.
 The codebase can be refactored to improve readability, maintainability, and code organization.
 ## Installation and Usage
 ### 1. Clone the repository:
-``` git clone [link to ui](https://github.com/AltaJD/PostureResearchProject/tree/master/gui) ```
+``` git clone https://github.com/AltaJD/PostureResearchProject/tree/master/gui```
 ### 2. Install the required dependencies:
 ```pip install -r requirements.txt```
 ### 3. Run the application:
