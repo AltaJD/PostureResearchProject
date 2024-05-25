@@ -1,7 +1,7 @@
 import threading
 from app_ui import App
 import time
-import ui_config
+import ui_config as uc
 import random
 
 
@@ -18,7 +18,7 @@ class ThreadManager:
     def __init__(self, app_title: str):
         self.app = App(title=app_title)
         self.reading_thread = threading.Thread(target=self.connect, daemon=True)
-        self.time_delay = ui_config.Measurements.thread_delay.value
+        self.time_delay = uc.Measurements.thread_delay.value
         self.alarm_num = 0
 
     def run(self):
@@ -70,14 +70,14 @@ def main_test():
                    }
     test_proc.app.sensor_values = sample_data
     """ Add buttons """
-    pause_graph_txt: str = ui_config.ElementNames.pause_button_txt.value
-    close_app_txt: str = ui_config.ElementNames.close_button_txt.value
-    save_txt: str = ui_config.ElementNames.save_data_button_txt.value
-    sign_in_txt: str = ui_config.ElementNames.sign_in_button_txt.value
-    register_txt: str = ui_config.ElementNames.register_button_txt.value
+    pause_graph_txt: str = uc.ElementNames.pause_button_txt.value
+    close_app_txt: str = uc.ElementNames.close_button_txt.value
+    save_txt: str = uc.ElementNames.save_data_button_txt.value
+    sign_in_txt: str = uc.ElementNames.sign_in_button_txt.value
+    register_txt: str = uc.ElementNames.register_button_txt.value
 
-    num_alarms_label: str = ui_config.ElementNames.alarm_num_label.value
-    proc_time_label: str = ui_config.ElementNames.processing_time_label.value
+    num_alarms_label: str = uc.ElementNames.alarm_num_label.value
+    proc_time_label: str = uc.ElementNames.processing_time_label.value
 
     app_ui = test_proc.app
 

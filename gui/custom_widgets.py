@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 from PIL import Image, ImageTk
 import ui_config
+from database_manager import UserDetails
 
 
 class TkCustomImage:
@@ -40,19 +41,57 @@ class Clock(tk.Frame):
         self.after(1000, self.update_time)
 
 
-class UserDetailsWindow(tk.Toplevel):
+class AbstractWindow(tk.Toplevel):
     def __init__(self, parent, title: str):
-        super().__init__(parent)
+        super().__init__()
         self.title(title)
         self.parent = parent
-        # Basic variables
+        self.submission_button = None
         self.button_nums = 0
+        self.message_frame = None
+
+    def close(self):
+        self.destroy()
+
+    def clear_messages(self):
+        if self.message_frame:
+            self.message_frame.destroy()
+
+    def show_message_frame(self, subject: str, details: str):
+        self.clear_messages()  # remove previous messages
+        frame = tk.LabelFrame(self, text=subject, font=ui_config.Fonts.info_panel_font.value)
+        frame.grid(row=3, column=1, padx=10, pady=10)
+        details_label = tk.Label(frame, text=details)
+        details_label.pack()
+        delay: int = ui_config.Measurements.pop_up_closing_delay.value
+        self.message_frame = frame
+        if subject != "Error":
+            self.after(delay, func=self.close)
+
+    def disable_submission_button(self):
+        button: tk.Button = self.submission_button
+        button.config(command=self.do_nothing)
+
+    def add_button(self, txt: str, func: Callable):
+        # Submit button
+        submit_button = tk.Button(self, text=txt, command=func)
+        submit_button.grid(row=2, column=self.button_nums, padx=10, pady=10)
+        self.submission_button = submit_button
+        self.button_nums += 1
+
+    @staticmethod
+    def do_nothing():
+        pass
+
+
+class UserDetailsWindow(AbstractWindow):
+    def __init__(self, parent, title: str):
+        super().__init__(parent, title)
         # Remember the fields
         self.full_name_entry = None
         self.password_entry = None
         # Create the widgets
         self.create_widgets()
-        self.submission_button = None
 
     def create_widgets(self):
         # Full name label and entry
@@ -67,106 +106,35 @@ class UserDetailsWindow(tk.Toplevel):
         self.password_entry = tk.Entry(self, show="*")
         self.password_entry.grid(row=1, column=1, padx=10, pady=10)
 
-    def add_button(self, txt: str, func: Callable):
-        # Submit button
-        submit_button = tk.Button(self, text=txt, command=func)
-        submit_button.grid(row=2, column=self.button_nums, padx=10, pady=10)
-        self.submission_button = submit_button
-        self.button_nums += 1
-
-    def get_entered_details(self) -> dict:
+    def get_entered_details(self) -> UserDetails:
         """ Get the values from popupfields as str
-        and return as a dict
-        {"first_name": str,
-        "middle_name": str,
-        "last_name": str,
-        "password": str
-        }
+        and return as UserDetails object
         """
         # Get the values from the entry fields
         full_name: str = self.full_name_entry.get()
         password: str = self.password_entry.get()
-        first, *middle, last = full_name.split()
-        # convert array middle to a string
-        middle = ''.join(middle)
+        details = UserDetails()
+        details.parse_full_name(full_name)
+        details.password = password
         # Perform any necessary validation or processing
-        print(f"First Name: {first}")
-        print(f"Middle Name: {middle}")
-        print(f"Last Name: {last}")
-        print(f"Password: {password}")
-
-        return {"first_name": first,
-                "middle_name": middle,
-                "last_name": last,
-                "password": password
-                }
-
-    def show_message_frame(self, subject: str, details: str):
-        message_frame = tk.LabelFrame(self, text=subject, font=ui_config.Fonts.info_panel_font.value)
-        message_frame.grid(row=3, column=1, padx=10, pady=10)
-        details_label = tk.Label(message_frame, text=details)
-        details_label.pack()
-        delay: int = ui_config.Measurements.pop_up_closing_delay.value
-        if subject != "Error":
-            self.after(delay, func=self.close_pop_up)
-
-    def disable_submission_button(self):
-        button: tk.Button = self.submission_button
-        button.config(command=self.do_nothing)
-
-    def close_pop_up(self):
-        self.destroy()
-
-    @staticmethod
-    def do_nothing():
-        pass
+        print(details)
+        return details
 
 
-class FileUploadWindow(tk.Toplevel):
+class FileUploadWindow(AbstractWindow):
     def __init__(self, parent, title: str):
-        super().__init__(parent)
-        self.title(title)
-        self.parent = parent
-        # Basic variables
-        self.button_nums = 0
+        super().__init__(parent, title)
         # Remember the fields
         self.file_path_entry = None
         # Create the widgets
-        self.create_default_widgets()
-        self.submission_button = None
+        self.create_widgets()
 
-    def create_default_widgets(self):
+    def create_widgets(self):
         # File path label and entry
         file_path_label = tk.Label(self, text="File Path:")
         file_path_label.grid(row=0, column=0, padx=10, pady=10, sticky="e")
         self.file_path_entry = tk.Entry(self)
         self.file_path_entry.grid(row=0, column=1, padx=10, pady=10)
 
-    def add_button(self, txt: str, func: Callable):
-        # Submit button
-        submit_button = tk.Button(self, text=txt, command=func)
-        submit_button.grid(row=1, column=self.button_nums, padx=10, pady=10)
-        self.submission_button = submit_button
-        self.button_nums += 1
-
     def get_file_path(self) -> str:
         return self.file_path_entry.get()
-
-    def show_message_frame(self, subject: str, details: str):
-        message_frame = tk.LabelFrame(self, text=subject, font=("Arial", 16))
-        message_frame.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
-        details_label = tk.Label(message_frame, text=details)
-        details_label.pack()
-        delay: int = ui_config.Measurements.pop_up_closing_delay.value
-        self.after(delay, func=self.close_pop_up)
-
-    def disable_submission_button(self):
-        button: tk.Button = self.submission_button
-        button.config(command=self.do_nothing)
-
-    def close_pop_up(self):
-        self.destroy()
-
-    @staticmethod
-    def do_nothing():
-        pass

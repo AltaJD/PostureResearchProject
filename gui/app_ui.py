@@ -6,7 +6,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
 
 import ui_config
-from database_manager import DatabaseManager
+from database_manager import DatabaseManager, UserDetails
 from custom_widgets import Clock, TkCustomImage, UserDetailsWindow, FileUploadWindow
 
 
@@ -255,14 +255,14 @@ class App(tk.Tk):
         self.pause()
         pop_up = UserDetailsWindow(self, title=ui_config.ElementNames.sign_in_popup_title.value)
         pop_up.add_button(txt="Log in", func=self.sign_in)
-        pop_up.add_button(txt="Cancel", func=pop_up.close_pop_up)
+        pop_up.add_button(txt="Cancel", func=pop_up.close)
         self.sign_in_popup = pop_up
 
     def show_register_popup(self):
         self.pause()
         pop_up = UserDetailsWindow(self, title=ui_config.ElementNames.registration_popup_title.value)
         pop_up.add_button(txt="Submit", func=self.register_user)
-        pop_up.add_button(txt="Cancel", func=pop_up.close_pop_up)
+        pop_up.add_button(txt="Cancel", func=pop_up.close)
         self.registration_popup = pop_up
 
     def show_edit_photo_popup(self):
@@ -270,7 +270,7 @@ class App(tk.Tk):
         popup = FileUploadWindow(self, "File Upload")
         popup.add_button(txt="Select File", func=self.select_file)
         popup.add_button(txt="Upload", func=self.submit_new_user_photo)
-        popup.add_button(txt="Cancel", func=popup.close_pop_up)
+        popup.add_button(txt="Cancel", func=popup.close)
         self.edit_photo_popup = popup
 
     """ Control functions """
@@ -316,12 +316,8 @@ class App(tk.Tk):
 
     def sign_in(self):
         pop_up: UserDetailsWindow = self.sign_in_popup
-        ed: dict = pop_up.get_entered_details()  # entered details (ed)
-        first, middle, last, password = ed['first_name'], ed['middle_name'], ed['last_name'], ed['password']
-        if not self.db_manager.is_valid_sign_in(first_name=first,
-                                                middle_name=middle,
-                                                second_name=last,
-                                                password=password):
+        user_details: UserDetails = pop_up.get_entered_details()
+        if not self.db_manager.is_valid_sign_in(details=user_details):
             pop_up.show_message_frame(subject="Error",
                                       details="Entered details do not match the details in the database")
             return
@@ -346,15 +342,17 @@ class App(tk.Tk):
         self.set_user_photo()
         # Change button config
         sign_in_button: tk.Button = self.control_buttons[ui_config.ElementNames.sign_in_button_txt.value]
-        sign_in_button.configure(text=ui_config.ElementNames.sign_in_button_txt.value, command=self.sign_in)
+        sign_in_button.configure(text=ui_config.ElementNames.sign_in_button_txt.value, command=self.show_sign_in_popup)
+        # Remove the button with name:
+        button_txt: str = ui_config.ElementNames.edit_photo_button_txt.value
+        self.control_buttons[button_txt].destroy()
+        self.user_name.destroy()
 
     def register_user(self):
         print("User with details below has been saved")
         popup: UserDetailsWindow = self.registration_popup
-        ed: dict = popup.get_entered_details()  # entered details (ed)
-        # parse entered details:
-        first, middle, last, password = ed['first_name'], ed['middle_name'], ed['last_name'], ed['password']
-        saved: bool = self.db_manager.save_user(first, middle, last, password)
+        user_details: UserDetails = popup.get_entered_details()
+        saved: bool = self.db_manager.save_user(user_details)
         if saved:
             popup.show_message_frame(subject="Success",
                                      details="Your personal details has been saved!\n"
