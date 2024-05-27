@@ -120,18 +120,19 @@ class App(tk.Tk):
             self.graph_ax.set_xlim(x[0], x[-1])
             lines.append(self.graph_lines[i])
         if self.sensor_values and not self.is_paused:
-            y_min = min(min(y) for y in self.sensor_values.values())
-            y_max = max(max(y) for y in self.sensor_values.values())
+            y_min = min((min(y) for y in self.sensor_values.values() if y), default=0)
+            y_max = max((max(y) for y in self.sensor_values.values() if y), default=1)
             self.graph_ax.set_ylim(y_min, y_max)
             self.detect_anomaly(self.sensor_values)
             self.graph_canvas.draw()
         return lines
 
     def detect_anomaly(self, data: dict):
-        # Check for alarm case
-        sensor_1, sensor_2, *other_sensors = tuple(data.keys())
-        if abs(data[sensor_1][-1] - data[sensor_2][-1]) >= 50:
-            self.update_alarm_num(pos=len(data[sensor_1])-1)
+        # RAISE ALARM
+        sensor_2, sensor_4 = "Sensor 2", "Sensor 4"
+        if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:
+            if abs(data[sensor_2][-1] - data[sensor_4][-1]) >= 50: ##RANGE MAY BE CHANGED
+                self.update_alarm_num(pos=len(data[sensor_2]) - 1)
 
     def update_sensor_values(self, new_data: dict) -> None:
         """ The new data should have the format:
@@ -139,7 +140,6 @@ class App(tk.Tk):
         [1, 2, 3],
         }
         """
-        # Overwrite values
         self.sensor_values = new_data
         self.func_ani.event_source.start()
 
@@ -189,7 +189,7 @@ class App(tk.Tk):
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-        self.graph_canvas = canvas  # remember the object
+        self.graph_canvas = canvas
         self.figure = fig
         self.graph_ax = ax
 

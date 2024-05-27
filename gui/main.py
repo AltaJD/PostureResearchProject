@@ -3,7 +3,8 @@ from app_ui import App
 import time
 import ui_config as uc
 import random
-
+import serial
+import re
 
 class ThreadManager:
     """ The prototype consists of 2-4 sensors,
@@ -43,31 +44,45 @@ class ThreadManager:
 
     def connect(self, data=None) -> None:
         """ Connect to the COM port """
-        # TODO: Add communication with COM port
+        # TODO: Add communication with COM port (DONE)
+        try:
+            ser = serial.Serial('COM6', 115200, timeout=1)
+        except serial.SerialException as e:
+            print(f"Error opening serial port: {e}")
+            return
         while not self.app.is_stopped:
             if not self.app.is_paused:
-                self.parse_data(data)
+                if ser.in_waiting > 0:
+                    line = ser.readline().decode('utf-8').rstrip()
+                    self.parse_data(line)
             time.sleep(self.time_delay)
         else:
             print("Data Parsing has been stopped")
+            ser.close()
 
     def parse_data(self, data) -> None:
-        print("=== Data Parsed ===")
-        # remove everything lower
-        new_vals = self.app.sensor_values
-        # increase values by one
-        if new_vals:
-            for key, value in new_vals.items():
-                some_value: int = random.randint(-30, 30)
-                value.append(some_value)
+        """ Parse the sensor data """
+        print(f"=== Data Received: {data} ===")
+        match = re.match(r"Range, (\d+), (\d+), mm", data)
+        if match:
+            value1, value2 = map(int, match.groups())
+            print(f"Parsed values: {value1}, {value2}")
+
+            new_vals = self.app.sensor_values
+            if "Sensor 2" not in new_vals:
+                new_vals["Sensor 2"] = []
+            if "Sensor 4" not in new_vals:
+                new_vals["Sensor 4"] = []
+
+            new_vals["Sensor 2"].append(value1)
+            new_vals["Sensor 4"].append(value2)
+
             self.app.update_sensor_values(new_vals)
 
 
 def main_test():
     test_proc = ThreadManager(app_title="Testing Data Validation")
-    sample_data = {"Sensor 2": [2, 4, 6, 8, 10],
-                   "Sensor 4": [1, 2, 3, 4, 5],
-                   }
+    sample_data = {"Sensor 2": [], "Sensor 4": []}
     test_proc.app.sensor_values = sample_data
     """ Add buttons """
     pause_graph_txt: str = uc.ElementNames.pause_button_txt.value
