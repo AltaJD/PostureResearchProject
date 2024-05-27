@@ -57,10 +57,10 @@ class AbstractWindow(tk.Toplevel):
         if self.message_frame:
             self.message_frame.destroy()
 
-    def show_message_frame(self, subject: str, details: str):
+    def show_message_frame(self, subject: str, details: str, row=3, col=0):
         self.clear_messages()  # remove previous messages
         frame = tk.LabelFrame(self, text=subject, font=ui_config.Fonts.info_panel_font.value)
-        frame.grid(row=3, column=1, padx=10, pady=10)
+        frame.grid(row=row, column=col, padx=10, pady=10)
         details_label = tk.Label(frame, text=details)
         details_label.pack()
         delay: int = ui_config.Measurements.pop_up_closing_delay.value
@@ -113,11 +113,123 @@ class UserDetailsWindow(AbstractWindow):
         # Get the values from the entry fields
         full_name: str = self.full_name_entry.get()
         password: str = self.password_entry.get()
-        details = UserDetails()
-        details.parse_full_name(full_name)
+        details = UserDetails(full_name)
         details.password = password
-        # Perform any necessary validation or processing
-        print(details)
+        return details
+
+
+class UserRegistrationWindow(UserDetailsWindow):
+    def __init__(self, parent, title):
+        super().__init__(parent, title)
+        # Basic memory cells
+        self.data_entries_num = 3  # minimum is 3, because other 3 [0-2] are taken for name, password, and buttons
+        self.message_location = (7, 0)
+        self.category_selection = None
+        # Add Shoulder Size categories
+        shoulder_sizes: list[str] = ui_config.ElementNames.shoulder_options.value
+        self.shoulder_size_var = self.add_category_selection(options=shoulder_sizes,
+                                                             name=ui_config.ElementNames.shoulder_category_txt.value)
+        # Add Gender categories
+        gender_options: list[str] = ui_config.ElementNames.gender_options.value
+        self.gender_var = self.add_category_selection(options=gender_options,
+                                                      name=ui_config.ElementNames.gender_category_txt.value)
+        # Add Date of Birth Selection
+        self.date_entry = self.add_date_selection(label_name="Date of Birth")
+        # Add numeral entry of data
+        self.weight_var, self.weight_entry = self.add_numeral_selection(limit=(30, 300), name="Weight (KG)")
+        self.height_var, self.height_entry = self.add_numeral_selection(limit=(100, 300), name="Height (CM)")
+
+    def add_category_selection(self, options: list, name: str) -> tk.StringVar:
+        """
+        Add a dropdown selection for categories.
+        :param options is a list of the categories
+        :param name is the category name
+        :returns address which will contain selected category for retrieval
+        """
+        category_label = tk.Label(self, text=f"{name}:")
+        category_label.grid(row=self.data_entries_num, column=0, padx=10, pady=10, sticky="e")
+
+        selection_address = tk.StringVar(self)
+        selection_address.set(options[0])  # Set the default value
+
+        category_dropdown = tk.OptionMenu(self, selection_address, *options)
+        category_dropdown.grid(row=self.data_entries_num, column=1, padx=10, pady=10)
+        self.data_entries_num += 1
+        return selection_address
+
+    def add_date_selection(self, label_name: str) -> tk.Entry:
+        date_label = tk.Label(self, text=label_name)
+        date_label.grid(row=self.data_entries_num, column=0, padx=10, pady=10, sticky="e")
+        date_field = tk.Entry(self, width=12)
+        date_field.grid(row=self.data_entries_num, column=1, padx=10, pady=10)
+        date_field.insert(0, "dd-mm-yyyy")
+        date_field.bind("<FocusIn>", self.clear_date_placeholder)
+        date_field.bind("<FocusOut>", self.validate_date)
+        self.data_entries_num += 1
+        return date_field
+
+    def clear_date_placeholder(self, event):
+        if self.date_entry.get() == "dd-mm-yyyy":
+            self.date_entry.delete(0, tk.END)
+
+    def validate_date(self, event):
+        date_str = self.date_entry.get()
+        try:
+            date = datetime.strptime(date_str, "%d-%m-%Y")
+            self.date_entry.delete(0, tk.END)
+            self.date_entry.insert(0, date.strftime("%d-%m-%Y"))
+        except ValueError:
+            if date_str == "":
+                self.date_entry.insert(0, "dd-mm-yyyy")
+            else:
+                self.show_message_frame("Error", "Please enter a valid date in the format dd-mm-yyyy.",
+                                        row=self.message_location[0],
+                                        col=self.message_location[1])
+
+    def add_numeral_selection(self, limit: tuple, name: str) -> tuple[tk.IntVar, tk.Entry]:
+        num_label = tk.Label(self, text=name)
+        num_label.grid(row=self.data_entries_num, column=0, padx=10, pady=10, sticky="e")
+        selection_variable = tk.IntVar()
+        selection_variable.set(limit[0])
+        selection_entry = tk.Entry(self, textvariable=selection_variable, width=5)
+        selection_entry.grid(row=self.data_entries_num, column=1, padx=10, pady=10)
+        selection_entry.bind("<FocusOut>", lambda event: self.validate_number(limit, name, selection_variable))
+        self.data_entries_num += 1
+        return selection_variable, selection_entry
+
+    def validate_number(self, limit: tuple, name: str, selection_variable: tk.IntVar, event=None):
+        """
+        Validates the numerical input entered by the user.
+
+        Args:
+            limit (tuple): A tuple containing the minimum and maximum values for the input.
+            name (str): The name of the input field.
+            selection_variable (int): it a num containing the selected value
+        """
+        input_value = selection_variable.get()
+        try:
+            value = int(input_value)
+            if limit[0] <= value <= limit[1]:
+                return  # Valid input
+            else:
+                self.show_message_frame("Error", f"{name} must be between {limit[0]} and {limit[1]}.",
+                                        row=self.message_location[0],
+                                        col=self.message_location[1])
+                selection_variable.set("")
+        except ValueError:
+            self.show_message_frame("Error", f"{name} must be a valid integer.",
+                                    row=self.message_location[0],
+                                    col=self.message_location[1])
+            selection_variable.set("")
+
+    def get_entered_details(self) -> UserDetails:
+        details: UserDetails = super().get_entered_details()
+        # get other details
+        details.weight = self.weight_var.get()
+        details.height = self.height_var.get()
+        details.shoulder_size = self.shoulder_size_var.get()
+        details.age = self.date_entry.get()
+        details.gender = self.gender_var.get()
         return details
 
 

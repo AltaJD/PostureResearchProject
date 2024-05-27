@@ -1,3 +1,2 @@
-First Name,Second Name,Middle Name,Password,Photo Path
-Alto,Alto,,p,/Users/altairissametov/PycharmProjects/PostureResearchProject/gui/data/img/user_1.png
-Alto,New,,pass
+First Name,Second Name,Middle Name,Password,Photo Path,Gender,Age,Shoulder Size,Height,Weight
+Alt,Alt,,alt,/Users/altairissametov/PycharmProjects/PostureResearchProject/gui/data/img/user_1.png,Male,10-10-2002,XL,170,60

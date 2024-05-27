@@ -7,7 +7,7 @@ from matplotlib.animation import FuncAnimation
 
 import ui_config
 from database_manager import DatabaseManager, UserDetails
-from custom_widgets import Clock, TkCustomImage, UserDetailsWindow, FileUploadWindow
+from custom_widgets import Clock, TkCustomImage, UserDetailsWindow, FileUploadWindow, UserRegistrationWindow
 
 
 class App(tk.Tk):
@@ -260,7 +260,7 @@ class App(tk.Tk):
 
     def show_register_popup(self):
         self.pause()
-        pop_up = UserDetailsWindow(self, title=ui_config.ElementNames.registration_popup_title.value)
+        pop_up = UserRegistrationWindow(self, title=ui_config.ElementNames.registration_popup_title.value)
         pop_up.add_button(txt="Submit", func=self.register_user)
         pop_up.add_button(txt="Cancel", func=pop_up.close)
         self.registration_popup = pop_up
@@ -322,7 +322,7 @@ class App(tk.Tk):
                                       details="Entered details do not match the details in the database")
             return
         pop_up.show_message_frame(subject="Success",
-                                  details=f"Welcome back, {self.db_manager.session.first_name}")
+                                  details=f"Welcome back, {self.db_manager.session.full_name}")
         self.set_user_photo()
         # Change button config
         sign_in_button: tk.Button = self.control_buttons[ui_config.ElementNames.sign_in_button_txt.value]
@@ -349,19 +349,22 @@ class App(tk.Tk):
         self.user_name.destroy()
 
     def register_user(self):
-        print("User with details below has been saved")
-        popup: UserDetailsWindow = self.registration_popup
+        popup: UserRegistrationWindow = self.registration_popup
         user_details: UserDetails = popup.get_entered_details()
         saved: bool = self.db_manager.save_user(user_details)
         if saved:
             popup.show_message_frame(subject="Success",
                                      details="Your personal details has been saved!\n"
-                                             "Please try to sign in to your account.")
+                                             "Please try to sign in to your account.",
+                                     row=popup.message_location[0],
+                                     col=popup.message_location[1])
             self.resume()
         else:
             popup.show_message_frame(subject="Error",
                                      details="User with similar personal details already exists!\n"
-                                             "Please try to sign in.")
+                                             "Please try to sign in.",
+                                     row=popup.message_location[0],
+                                     col=popup.message_location[1])
 
     def start_graph_refreshing(self):
         self.func_ani = FuncAnimation(self.figure, self.update_graph, interval=50, blit=True)  # remember the object

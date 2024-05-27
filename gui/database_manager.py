@@ -1,32 +1,45 @@
 import pandas as pd
 import ui_config
 import csv
+from typing import Union
 
 
 class UserDetails:
     # Meta Data
-    first_name: str | None
-    last_name: str | None
-    middle_name: str | None
+    first_name: Union[str, None]
+    last_name: Union[str, None]
+    middle_name: Union[str, None]
+    password: Union[str, None]
     # Other details
-    photo_path: str | None
-    password: str | None
+    weight: Union[int, None]
+    height: Union[int, None]
+    gender: Union[str, None]
+    age: Union[int, None]
+    shoulder_size: Union[str, None]
+    photo_path: str
 
-    def __init__(self):
-        self.first_name = None
-        self.last_name = None
-        self.middle_name = None
-        self.photo_path = None
+    def __init__(self, full_name: str):
+        self.parse_full_name(full_name)
+        self.photo_path = ui_config.FilePaths.user_photo_icon.value
         self.password = None
+        self.weight = None
+        self.height = None
+        self.gender = None
+        self.age = None
+        self.shoulder_size = None
 
     def __repr__(self) -> str:
         representation = f"Received UserDetails:\n" \
-                         f"Name: {self.get_full_name()}\n" \
-                         f"Has Photo: {self.has_photo()}"
+                         f"Name:\t\t{self.get_full_name()}\n" \
+                         f"Has Photo:\t\t{self.has_photo()}\n" \
+                         f"Weight:\t\t{self.weight} (kg)\n" \
+                         f"Height:\t\t{self.height} (cm)\n" \
+                         f"Shoulder Size:\t\t{self.shoulder_size}\n" \
+                         f"Gender:\t\t{self.gender}\n" \
+                         f"Age:\t\t{self.age}\n"
         return representation
 
     def parse_full_name(self, name: str) -> None:
-        # TODO: implement function
         first, *middle, last = name.split()
         # convert array to a single str
         middle = ''.join(middle)
@@ -40,9 +53,22 @@ class UserDetails:
                f"{self.last_name}"
 
     def has_photo(self) -> bool:
-        if self.photo_path:
+        if self.photo_path == ui_config.FilePaths.user_photo_icon.value:
             return True
         return False
+
+    def get_ordered_data(self) -> list[Union[str, int]]:
+        ordered_data = [self.first_name,
+                        self.last_name,
+                        self.middle_name,
+                        self.password,
+                        self.photo_path,
+                        self.gender,
+                        self.age,
+                        self.shoulder_size,
+                        self.height,
+                        self.weight]
+        return ordered_data
 
     @staticmethod
     def encrypt_password(self, password: str):
@@ -50,7 +76,7 @@ class UserDetails:
         pass
 
     @staticmethod
-    def reformat_mid_name(name: str | None) -> str:
+    def reformat_mid_name(name: Union[str, None]) -> str:
         if name is None:
             return ""
         return name
@@ -58,35 +84,24 @@ class UserDetails:
 
 class SessionInstance:
     user_id: int
-    first_name: str | None
-    second_name: str | None
-    middle_name: str | None
-    photo_path: str | None
+    user_details: Union[UserDetails, None]
+    full_name: str
 
     def __init__(self):
         self.user_id = -1
-        self.first_name = None
-        self.second_name = None
-        self.middle_name = None
-        self.full_name = None
-        self.photo_path = ui_config.FilePaths.user_photo_icon.value
+        self.user_details = None
+        self.full_name = "Unknown"
 
-    def update_instance(self, id: int, details: UserDetails):
+    def update_instance(self, user_id: int, details: UserDetails):
         """ Remember user details when signed in """
-        self.user_id = id
-        self.first_name = details.first_name
-        self.second_name = details.last_name
-        self.middle_name = details.middle_name
-        self.photo_path = details.photo_path
-        self.full_name = self.first_name+" "+self.second_name
+        self.user_id = user_id
+        self.user_details = details
+        self.full_name = details.first_name+" "+details.last_name
 
     def reset(self):
         """ Reset is used when the user signs out """
         self.user_id = -1
-        self.first_name = None
-        self.second_name = None
-        self.middle_name = None
-        self.photo_path = ui_config.FilePaths.user_photo_icon.value
+        self.user_details = None
 
 
 class DatabaseManager:
@@ -145,7 +160,7 @@ class DatabaseManager:
         True if the data has been successfully added
         False if the data is already stored in the db
         """
-        data_entity = [details.first_name, details.last_name, details.middle_name, details.password]
+        data_entity = details.get_ordered_data()
         if self.find_user_in_db(details).shape[0] > 0:
             return False  # details already exists
 
@@ -155,13 +170,17 @@ class DatabaseManager:
         return True  # details have been saved
 
     def save_data(self, data: dict, user_id: int):
+        """ The function receive the sensor data collected by app
+        and transform to csv file named according to the user id
+        """
         path: str = self.values_folder+f'/{user_id}'
         df = pd.DataFrame.from_dict(data)
         df.to_csv(path)
         print("Data has been saved")
 
     def get_user_photo_path(self) -> str:
-        return self.session.photo_path
+        details: UserDetails = self.session.user_details
+        return details.photo_path
 
     def save_new_photo_path(self, new_path: str):
         user_id: int = self.session.user_id

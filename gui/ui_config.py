@@ -38,7 +38,18 @@ class ElementNames(Enum):
                              "Second Name",
                              "Middle Name",
                              "Password",
-                             "Photo Path"]
+                             "Photo Path",
+                             "Gender",
+                             "Age",
+                             "Shoulder Size",
+                             "Height",
+                             "Weight"]
+
+    shoulder_options = ["XL", "L", "M", "S", "XS"]
+    shoulder_category_txt = "Shoulder Size"
+
+    gender_options = ["Male", "Female", "Prefer not to say"]
+    gender_category_txt = "Gender"
 
 
 class Measurements(Enum):
