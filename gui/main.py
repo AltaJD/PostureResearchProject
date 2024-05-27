@@ -44,7 +44,7 @@ class ThreadManager:
 
     def connect(self, data=None) -> None:
         """ Connect to the COM port """
-        # TODO: Add communication with COM port (DONE)
+        # Add communication with COM port (DONE)
         try:
             ser = serial.Serial('COM6', 115200, timeout=1)
         except serial.SerialException as e:
@@ -74,11 +74,22 @@ class ThreadManager:
             if "Sensor 4" not in new_vals:
                 new_vals["Sensor 4"] = []
 
+            # Check for anomalies and replace with the previous value if over 1200
+            if value1 >= 1200:
+                if new_vals["Sensor 2"]:
+                    value1 = new_vals["Sensor 2"][-1]
+                else:
+                    value1 = 600
+            if value2 >= 1200:
+                if new_vals["Sensor 4"]:
+                    value2 = new_vals["Sensor 4"][-1]
+                else:
+                    value2 = 600
+
             new_vals["Sensor 2"].append(value1)
             new_vals["Sensor 4"].append(value2)
 
             self.app.update_sensor_values(new_vals)
-
 
 def main_test():
     test_proc = ThreadManager(app_title="Testing Data Validation")
