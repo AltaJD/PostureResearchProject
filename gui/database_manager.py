@@ -54,8 +54,8 @@ class UserDetails:
 
     def has_photo(self) -> bool:
         if self.photo_path == ui_config.FilePaths.user_photo_icon.value:
-            return True
-        return False
+            return False
+        return True
 
     def get_ordered_data(self) -> list[Union[str, int]]:
         ordered_data = [self.first_name,
@@ -92,7 +92,7 @@ class SessionInstance:
         self.user_details = None
         self.full_name = "Unknown"
 
-    def update_instance(self, user_id: int, details: UserDetails):
+    def update(self, user_id: int, details: UserDetails):
         """ Remember user details when signed in """
         self.user_id = user_id
         self.user_details = details
@@ -150,9 +150,17 @@ class DatabaseManager:
         df_user = self.find_user_in_db(details)
         if df_user.shape[0] == 0 or df_user["Password"].iloc[0] != details.password:
             return False
+        # Get other details
         details.photo_path = df_user["Photo Path"].iloc[0]
-        self.session.update_instance(df_user.index,
-                                     details)
+        details.gender     = df_user["Gender"].iloc[0]
+        details.age        = df_user["Age"].iloc[0]
+        details.shoulder_size = df_user["Shoulder Size"].iloc[0]
+        details.height     = df_user["Height"].iloc[0]
+        details.weight     = df_user["Weight"].iloc[0]
+        print("==== User below has signed in ====")
+        print(details)
+        self.session.update(df_user.index,
+                            details)
         return True
 
     def save_user(self, details: UserDetails) -> bool:
