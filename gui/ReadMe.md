@@ -22,16 +22,18 @@ The application displays a distinctive background color when an alarm is detecte
 The application can now properly display images.
 ### 10. Improve the design (TODO)
 The application's design can be further improved to enhance the user experience.
-### 11. Add password encryption (TODO)
+### 11. Add password encryption (DONE)
 The application should encrypt user passwords for better security.
 ### 12. Code Refactoring (TODO)
 The codebase can be refactored to improve readability, maintainability, and code organization.
 ### 13. User reports (TODO, Altair)
 Add reports generating fuction, including: user used the device for (duration), alarm generated during (local time), etc. So that user can understand their postural behavior.
 ### 14. Data cleaning (Xijun is working on this)
-Replace extream values with the last value. And add low-pass filter(if needed.
+Replace extream values with the last value. And add low-pass filter(if needed).
 ### 15. Alarm date and time recording (TODO)
 Alarm generated at XX:XX AM/PM, dd-mm-yy. Lasted for XX mins.
+### 16. New Data Entry upon Registration (DONE)
+The app requests and store more data, such as age, gender, weight, height, and shoulder size [XL, L, M, S, XS]
 
 ## Installation and Usage
 ### 1. Clone the repository:

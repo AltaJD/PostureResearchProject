@@ -136,8 +136,9 @@ class App(tk.Tk):
             # if 170 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 66.54:  ##RANGE MAY BE CHANGED
             #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
             if 300 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 100.5:  ##RANGE MAY BE CHANGED
-                    self.update_alarm_num(pos=len(data[sensor_2]) - 1)
+                self.update_alarm_num(pos=len(data[sensor_2]) - 1)
 # if sensor 2 decrease and sensor 4 increase at the same time. this may suggest that the body is tilting/shifting to the sides.
+
     def update_sensor_values(self, new_data: dict) -> None:
         """ The new data should have the format:
         {"Sensor #:

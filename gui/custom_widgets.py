@@ -113,8 +113,7 @@ class UserDetailsWindow(AbstractWindow):
         # Get the values from the entry fields
         full_name: str = self.full_name_entry.get()
         password: str = self.password_entry.get()
-        details = UserDetails(full_name)
-        details.password = password
+        details = UserDetails(full_name, password)
         return details
 
 
@@ -123,7 +122,7 @@ class UserRegistrationWindow(UserDetailsWindow):
         super().__init__(parent, title)
         # Basic memory cells
         self.data_entries_num = 3  # minimum is 3, because other 3 [0-2] are taken for name, password, and buttons
-        self.message_location = (7, 0)
+        self.message_location = (7, 3)
         self.category_selection = None
         # Add Shoulder Size categories
         shoulder_sizes: list[str] = ui_config.ElementNames.shoulder_options.value

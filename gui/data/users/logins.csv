@@ -1,2 +1,3 @@
 First Name,Second Name,Middle Name,Password,Photo Path,Gender,Age,Shoulder Size,Height,Weight
-Alt,Alt,,alt,/Users/altairissametov/PycharmProjects/PostureResearchProject/gui/data/img/user_1.png,Male,10-10-2002,XL,170,60
+Alt,Alt,,$2b$12$2hlsqft1KuADASEYHAyzBeYp6VOnidIhVeP1RgpfHSOG4XYEXhXyW,./data/img/user_photo.jpeg,Male,10-10-2002,XL,100,30
+Test,Test,,$2b$12$UsofZZBNfwAXuRJYyVWope/IiO8MDbHnGfDqUvXP0tX335168Ck5G,./data/img/user_photo.jpeg,Male,10-12-2001,XL,100,30

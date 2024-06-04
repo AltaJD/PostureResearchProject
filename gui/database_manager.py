@@ -1,15 +1,16 @@
 import pandas as pd
 import ui_config
 import csv
+import bcrypt
 from typing import Union
 
 
 class UserDetails:
     # Meta Data
-    first_name: Union[str, None]
-    last_name: Union[str, None]
-    middle_name: Union[str, None]
-    password: Union[str, None]
+    first_name: str
+    last_name: str
+    middle_name: str
+    password: str
     # Other details
     weight: Union[int, None]
     height: Union[int, None]
@@ -18,10 +19,10 @@ class UserDetails:
     shoulder_size: Union[str, None]
     photo_path: str
 
-    def __init__(self, full_name: str):
+    def __init__(self, full_name: str, new_password: str):
         self.parse_full_name(full_name)
         self.photo_path = ui_config.FilePaths.user_photo_icon.value
-        self.password = None
+        self.password = new_password
         self.weight = None
         self.height = None
         self.gender = None
@@ -61,7 +62,7 @@ class UserDetails:
         ordered_data = [self.first_name,
                         self.last_name,
                         self.middle_name,
-                        self.password,
+                        self.encrypt_password(self.password),
                         self.photo_path,
                         self.gender,
                         self.age,
@@ -70,10 +71,15 @@ class UserDetails:
                         self.weight]
         return ordered_data
 
+    def is_valid_password(self, stored_password: str) -> bool:
+        stored_password: bytes = stored_password.encode('utf-8')
+        this_pw: bytes = self.password.encode('utf-8')
+        return bcrypt.checkpw(password=this_pw, hashed_password=stored_password)
+
     @staticmethod
-    def encrypt_password(self, password: str):
-        # TODO: implement encryption
-        pass
+    def encrypt_password(new_password: str) -> str:
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(new_password.encode('utf-8'), salt).decode('utf-8')
 
     @staticmethod
     def reformat_mid_name(name: Union[str, None]) -> str:
@@ -86,11 +92,13 @@ class SessionInstance:
     user_id: int
     user_details: Union[UserDetails, None]
     full_name: str
+    alarm_times: list[int]  # remember the time for alarms detected per session # TODO
 
     def __init__(self):
         self.user_id = -1
         self.user_details = None
         self.full_name = "Unknown"
+        self.alarm_times = []
 
     def update(self, user_id: int, details: UserDetails):
         """ Remember user details when signed in """
@@ -148,7 +156,7 @@ class DatabaseManager:
     def is_valid_sign_in(self, details: UserDetails) -> bool:
         """ The function determines whether entered details are correct and add them into one session instance """
         df_user = self.find_user_in_db(details)
-        if df_user.shape[0] == 0 or df_user["Password"].iloc[0] != details.password:
+        if df_user.shape[0] == 0 or not details.is_valid_password(df_user["Password"].iloc[0]):
             return False
         # Get other details
         details.photo_path = df_user["Photo Path"].iloc[0]
