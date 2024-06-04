@@ -26,7 +26,7 @@ The application's design can be further improved to enhance the user experience.
 The application should encrypt user passwords for better security.
 ### 12. Code Refactoring (TODO)
 The codebase can be refactored to improve readability, maintainability, and code organization.
-### 13. User reports (TODO)
+### 13. User reports (TODO, Altair)
 Add reports generating fuction, including: user used the device for (duration), alarm generated during (local time), etc. So that user can understand their postural behavior.
 ### 14. Data cleaning (Xijun is working on this)
 Replace extream values with the last value. And add low-pass filter(if needed.
