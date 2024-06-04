@@ -26,6 +26,10 @@ The application's design can be further improved to enhance the user experience.
 The application should encrypt user passwords for better security.
 ### 12. Code Refactoring (TODO)
 The codebase can be refactored to improve readability, maintainability, and code organization.
+### 13. User reports (TODO)
+Add reports generating fuction, including: user used the device for (duration), alarm generated during (local time), etc. So that user can understand their postural behavior.
+### 14. Low pass filter (Xijun is working on this)
+Add low-pass filter to further clean sensor readings
 ## Installation and Usage
 ### 1. Clone the repository:
 ``` git clone https://github.com/AltaJD/PostureResearchProject/tree/master/gui```
