@@ -11,3 +11,5 @@
 10. Improve the design !
 11. Add password encryption
 12. Code Refactoring
+
+13. Add reports generating fuction, including: user used the device for (duration), alarm generated during (local time), etc. So that user can understand their postural behavior.
