@@ -4,7 +4,7 @@ from typing import Callable
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.animation import FuncAnimation
-
+import datetime
 import ui_config
 from database_manager import DatabaseManager, UserDetails
 from custom_widgets import Clock, TkCustomImage, UserDetailsWindow, FileUploadWindow, UserRegistrationWindow
@@ -131,9 +131,13 @@ class App(tk.Tk):
         # RAISE ALARM
         sensor_2, sensor_4 = "Sensor 2", "Sensor 4"
         if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:
-            if abs(data[sensor_2][-1] - data[sensor_4][-1]) >= 50: ##RANGE MAY BE CHANGED
-                self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-
+            # if 100 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 38.6:  ##RANGE MAY BE CHANGED
+            #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
+            # if 170 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 66.54:  ##RANGE MAY BE CHANGED
+            #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
+            if 300 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 100.5:  ##RANGE MAY BE CHANGED
+                    self.update_alarm_num(pos=len(data[sensor_2]) - 1)
+# if sensor 2 decrease and sensor 4 increase at the same time. this may suggest that the body is tilting/shifting to the sides.
     def update_sensor_values(self, new_data: dict) -> None:
         """ The new data should have the format:
         {"Sensor #:
