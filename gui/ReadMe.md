@@ -28,8 +28,11 @@ The application should encrypt user passwords for better security.
 The codebase can be refactored to improve readability, maintainability, and code organization.
 ### 13. User reports (TODO)
 Add reports generating fuction, including: user used the device for (duration), alarm generated during (local time), etc. So that user can understand their postural behavior.
-### 14. Low pass filter (Xijun is working on this)
-Add low-pass filter to further clean sensor readings
+### 14. Data cleaning (Xijun is working on this)
+Replace extream values with the last value. And add low-pass filter(if needed.
+### 15. Alarm date and time recording (TODO)
+Alarm generated at XX:XX AM/PM, dd-mm-yy. Lasted for XX mins.
+
 ## Installation and Usage
 ### 1. Clone the repository:
 ``` git clone https://github.com/AltaJD/PostureResearchProject/tree/master/gui```
