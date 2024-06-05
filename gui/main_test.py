@@ -69,8 +69,8 @@ class ThreadManager:
 
 def main_test():
     test_proc = ThreadManager(app_title="Testing Data Validation")
-    sample_data = {"Sensor 2": [2, 4, 6, 8, 10],
-                   "Sensor 4": [1, 2, 3, 4, 5],
+    sample_data = {"Sensor 2": [],
+                   "Sensor 4": [],
                    }
     test_proc.app.sensor_values = sample_data
     """ Add buttons """

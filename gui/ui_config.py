@@ -66,6 +66,8 @@ class Measurements(Enum):
     pop_up_closing_delay = 2000  # ms
     thread_delay = 0.01  # s
 
+    time_format = "%I:%M:%S %p, %d-%m-%y"
+
 
 class Fonts(Enum):
     info_panel_font = ("Helvetica", 48)

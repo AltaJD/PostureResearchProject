@@ -1,6 +1,7 @@
 import pandas as pd
 import ui_config
 import csv
+import datetime
 import bcrypt
 from typing import Union
 
@@ -90,15 +91,15 @@ class UserDetails:
 
 class SessionInstance:
     user_id: int
-    user_details: Union[UserDetails, None]
     full_name: str
-    alarm_times: list[int]  # remember the time for alarms detected per session # TODO
+    alarm_times: list[str]  # remember the time for alarms detected per session # TODO
+    user_details: Union[UserDetails, None]
 
     def __init__(self):
-        self.user_id = -1
+        self.user_id      = -1
         self.user_details = None
-        self.full_name = "Unknown"
-        self.alarm_times = []
+        self.full_name    = "Unknown"
+        self.alarm_times  = []
 
     def update(self, user_id: int, details: UserDetails):
         """ Remember user details when signed in """
@@ -113,7 +114,8 @@ class SessionInstance:
 
 
 class DatabaseManager:
-    """ Storage and reading the data in csv format
+    """
+    Storage and reading the data in csv format
     using pandas
     """
     users_login_path: str
@@ -185,17 +187,35 @@ class DatabaseManager:
             csv_writer.writerow(data_entity)
         return True  # details have been saved
 
-    def save_data(self, data: dict, user_id: int):
-        """ The function receive the sensor data collected by app
+    def save_data(self, data: dict, time: list[str]):
+        """
+        The function receive the sensor data collected by app
         and transform to csv file named according to the user id
         """
-        path: str = self.values_folder+f'/{user_id}'
+        path: str = self.values_folder+f'/{self.session.user_id}'
         df = pd.DataFrame.from_dict(data)
+        time_ds = pd.Series(data=time)
+        df["Time"] = time_ds
         df.to_csv(path)
-        print("Data has been saved")
+        print("Total alarm type: ", self.get_total_alarm_time(), " minutes")
+        print(f"Data has been saved to {path}")
+
+    def get_total_alarm_time(self) -> float:
+        if len(self.session.alarm_times) == 0:
+            return 0.0
+        # Calculate the time difference in minutes
+        time_format: str = ui_config.Measurements.time_format.value
+        first_time = datetime.datetime.strptime(date_string=self.session.alarm_times[0],
+                                                format=time_format)
+        last_time = datetime.datetime.strptime(date_string=self.session.alarm_times[-1],
+                                               format=time_format)
+        time_diff = (last_time - first_time).total_seconds() / 60
+        return time_diff
 
     def get_user_photo_path(self) -> str:
         details: UserDetails = self.session.user_details
+        if details is None:
+            return ""
         return details.photo_path
 
     def save_new_photo_path(self, new_path: str):
