@@ -36,6 +36,8 @@ Alarm generated at XX:XX AM/PM, dd-mm-yy. Lasted for XX mins.
 The app requests and store more data, such as age, gender, weight, height, and shoulder size [XL, L, M, S, XS]
 ### 17. Pause monitoring (TODO)
 User have the choice to Pause Monitoring for X mins.
+### 18. Neutral Posture data collection (TODO)
+After a new user has created a profile, give Instruct: Please make two posture(1.round shoulder with extream poking chin, 2. normal shoulder with neck extention) at 3 different distances(65/70/80cm), one by one. User should stay still at each posture for at least 10s. Data will be used to culculate individual fleibility. 
 
 ## Installation and Usage
 ### 1. Clone the repository:
