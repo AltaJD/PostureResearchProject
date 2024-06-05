@@ -26,6 +26,7 @@ class App(tk.Tk):
         self.db_manager = DatabaseManager()
         # Standard variables
         self.sensor_values = dict()
+        self.sensor_time = list()  # list[str]
         self.alarm_num = 0
         self.button_num = 0
         self.menu_button_num = 0
@@ -137,14 +138,19 @@ class App(tk.Tk):
             #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
             if 300 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 100.5:  ##RANGE MAY BE CHANGED
                 self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-# if sensor 2 decrease and sensor 4 increase at the same time. this may suggest that the body is tilting/shifting to the sides.
+        # if sensor 2 decrease and sensor 4 increase at the same time. this may suggest that the body is tilting/shifting to the sides.
 
     def update_sensor_values(self, new_data: dict) -> None:
         """ The new data should have the format:
         {"Sensor #:
         [1, 2, 3],
         }
+        Remember the timestamp per receipt of the sensor reading
         """
+        # Remember the timestamp
+        current_time = datetime.datetime.now().strftime(ui_config.Measurements.time_format.value)
+        self.sensor_time.append(current_time)
+        # Update values
         self.sensor_values = new_data
         self.func_ani.event_source.start()
 
@@ -156,6 +162,9 @@ class App(tk.Tk):
         self.draw_vert_span(x=pos)
         self.prev_alarm_pos = pos
         self.add_alarm_text(pos)
+        # Remember alarm_times
+        this_time = datetime.datetime.now().strftime(ui_config.Measurements.time_format)
+        self.db_manager.session.alarm_times.append(this_time)
 
     def add_alarm_text(self, pos: int) -> None:
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -176,7 +185,7 @@ class App(tk.Tk):
                                                color='r',
                                                linewidth=2))
 
-    def add_alarm_text(self, pos: int) -> None:
+    def add_alarm_text(self) -> None:
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         alarm_text = f"Alarm {self.alarm_num} at {current_time}"
         self.alarm_text_label.config(text=alarm_text)
@@ -299,6 +308,7 @@ class App(tk.Tk):
 
     def set_user_photo(self, path=None):
         photo_label: tk.Label = self.user_photo
+        # The order of procedure should not be changed
         if path is None:
             path: str = self.db_manager.get_user_photo_path()
         if path == "":
@@ -334,7 +344,7 @@ class App(tk.Tk):
         self.is_stopped = True
 
     def save_data(self):
-        self.db_manager.save_data(data=self.sensor_values, user_id=0)
+        self.db_manager.save_data(data=self.sensor_values, time=self.sensor_time)
 
     def sign_in(self):
         pop_up: UserDetailsWindow = self.sign_in_popup
