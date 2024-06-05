@@ -34,6 +34,8 @@ Replace extream values with the last value. And add low-pass filter(if needed).
 Alarm generated at XX:XX AM/PM, dd-mm-yy. Lasted for XX mins.
 ### 16. New Data Entry upon Registration (DONE)
 The app requests and store more data, such as age, gender, weight, height, and shoulder size [XL, L, M, S, XS]
+### 17. Pause monitoring (TODO)
+User have the choice to Pause Monitoring for X mins.
 
 ## Installation and Usage
 ### 1. Clone the repository:
