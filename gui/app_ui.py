@@ -155,6 +155,12 @@ class App(tk.Tk):
         self.alarm_num_label.config(text=str(self.alarm_num))
         self.draw_vert_span(x=pos)
         self.prev_alarm_pos = pos
+        self.add_alarm_text(pos)
+
+    def add_alarm_text(self, pos: int) -> None:
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        alarm_text = f"Alarm {self.alarm_num} at {current_time}"
+        self.alarm_text_label.config(text=alarm_text)
 
     def draw_vert_span(self, x: int, width=1):
         # Add a vertical span to the background
@@ -169,6 +175,12 @@ class App(tk.Tk):
                                arrowprops=dict(arrowstyle='->',
                                                color='r',
                                                linewidth=2))
+
+    def add_alarm_text(self, pos: int) -> None:
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        alarm_text = f"Alarm {self.alarm_num} at {current_time}"
+        self.alarm_text_label.config(text=alarm_text)
+        self.alarm_num += 1
 
     def create_control_frame(self):
         frame = tk.Frame(self.body_frame)
@@ -198,6 +210,11 @@ class App(tk.Tk):
         self.figure = fig
         self.graph_ax = ax
 
+        alarm_frame = tk.LabelFrame(self.graph_frame, text="Alarm Time", font=("Helvetica", 12))
+        alarm_frame.pack(side=tk.BOTTOM, fill="x", pady=10)
+        self.alarm_text_label = tk.Label(alarm_frame, text="", font=("Helvetica", 12), fg="red")
+        self.alarm_text_label.pack(side=tk.LEFT, padx=10)
+        
     def get_axes_values(self, sensor: str, limit=None):
         if self.sensor_values.get(sensor):
             x = list(range(len(self.sensor_values[sensor])))
