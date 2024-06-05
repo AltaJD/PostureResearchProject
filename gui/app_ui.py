@@ -26,7 +26,6 @@ class App(tk.Tk):
         self.db_manager = DatabaseManager()
         # Standard variables
         self.sensor_values = dict()
-        self.sensor_time = list()  # list[str]
         self.alarm_num = 0
         self.button_num = 0
         self.menu_button_num = 0
@@ -115,8 +114,8 @@ class App(tk.Tk):
     def update_graph(self, frame=None) -> list:
         lines = []
         lim: int = ui_config.Measurements.graph_x_limit.value
-        for i, key in enumerate(self.sensor_values.keys()):
-            x, y = self.get_axes_values(key, limit=lim)
+        for i, sens_name in enumerate(self.sensor_values.keys()):
+            x, y = self.get_axes_values(sens_name, limit=lim)
             self.graph_lines[i].set_data(x, y)
             self.graph_ax.set_xlim(x[0], x[-1])
             lines.append(self.graph_lines[i])
@@ -129,7 +128,6 @@ class App(tk.Tk):
         return lines
 
     def detect_anomaly(self, data: dict):
-        """ Function determines when the alarm should be raised """
         # RAISE ALARM
         sensor_2, sensor_4 = "Sensor 2", "Sensor 4"
         if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:
@@ -139,19 +137,14 @@ class App(tk.Tk):
             #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
             if 300 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 100.5:  ##RANGE MAY BE CHANGED
                 self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-            # if sensor 2 decrease and sensor 4 increase at the same time. this may suggest that the body is tilting/shifting to the sides.
+# if sensor 2 decrease and sensor 4 increase at the same time. this may suggest that the body is tilting/shifting to the sides.
 
     def update_sensor_values(self, new_data: dict) -> None:
         """ The new data should have the format:
         {"Sensor #:
         [1, 2, 3],
         }
-        Remember the timestamp per receipt of the sensor reading
         """
-        # Remember the timestamp
-        current_time = datetime.datetime.now().strftime(ui_config.Measurements.time_format.value)
-        self.sensor_time.append(current_time)
-        # Update values
         self.sensor_values = new_data
         self.func_ani.event_source.start()
 
@@ -162,9 +155,12 @@ class App(tk.Tk):
         self.alarm_num_label.config(text=str(self.alarm_num))
         self.draw_vert_span(x=pos)
         self.prev_alarm_pos = pos
-        # Remember alarm_times
-        this_time = datetime.datetime.now().strftime(ui_config.Measurements.time_format)
-        self.db_manager.session.alarm_times.append(this_time)
+        self.add_alarm_text(pos)
+
+    def add_alarm_text(self, pos: int) -> None:
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        alarm_text = f"Alarm {self.alarm_num} at {current_time}"
+        self.alarm_text_label.config(text=alarm_text)
 
     def draw_vert_span(self, x: int, width=1):
         # Add a vertical span to the background
@@ -179,6 +175,12 @@ class App(tk.Tk):
                                arrowprops=dict(arrowstyle='->',
                                                color='r',
                                                linewidth=2))
+
+    def add_alarm_text(self, pos: int) -> None:
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        alarm_text = f"Alarm {self.alarm_num} at {current_time}"
+        self.alarm_text_label.config(text=alarm_text)
+        self.alarm_num += 1
 
     def create_control_frame(self):
         frame = tk.Frame(self.body_frame)
@@ -208,6 +210,11 @@ class App(tk.Tk):
         self.figure = fig
         self.graph_ax = ax
 
+        alarm_frame = tk.LabelFrame(self.graph_frame, text="Alarm Time", font=("Helvetica", 12))
+        alarm_frame.pack(side=tk.BOTTOM, fill="x", pady=10)
+        self.alarm_text_label = tk.Label(alarm_frame, text="", font=("Helvetica", 12), fg="red")
+        self.alarm_text_label.pack(side=tk.LEFT, padx=10)
+        
     def get_axes_values(self, sensor: str, limit=None):
         if self.sensor_values.get(sensor):
             x = list(range(len(self.sensor_values[sensor])))
@@ -292,7 +299,6 @@ class App(tk.Tk):
 
     def set_user_photo(self, path=None):
         photo_label: tk.Label = self.user_photo
-        # The order of procedure should not be changed
         if path is None:
             path: str = self.db_manager.get_user_photo_path()
         if path == "":
@@ -328,7 +334,7 @@ class App(tk.Tk):
         self.is_stopped = True
 
     def save_data(self):
-        self.db_manager.save_data(data=self.sensor_values, time=self.sensor_time)
+        self.db_manager.save_data(data=self.sensor_values, user_id=0)
 
     def sign_in(self):
         pop_up: UserDetailsWindow = self.sign_in_popup
