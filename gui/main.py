@@ -46,7 +46,7 @@ class ThreadManager:
         """ Connect to the COM port """
         # Add communication with COM port (DONE)
         try:
-            ser = serial.Serial('COM6', 115200, timeout=1)
+            ser = serial.Serial('COM8', 115200, timeout=1)
         except serial.SerialException as e:
             print(f"Error opening serial port: {e}")
             return

@@ -134,10 +134,10 @@ class App(tk.Tk):
         if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:
             # if 100 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 38.6:  ##RANGE MAY BE CHANGED
             #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-            # if 170 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 66.54:  ##RANGE MAY BE CHANGED
-            #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-            if 300 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 100.5:  ##RANGE MAY BE CHANGED
+            if 170 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 66.54:  ##RANGE MAY BE CHANGED
                 self.update_alarm_num(pos=len(data[sensor_2]) - 1)
+            # if 300 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 100.5:  ##RANGE MAY BE CHANGED
+            #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
         # if sensor 2 decrease and sensor 4 increase at the same time. this may suggest that the body is tilting/shifting to the sides.
 
     def update_sensor_values(self, new_data: dict) -> None:
@@ -161,12 +161,11 @@ class App(tk.Tk):
         self.alarm_num_label.config(text=str(self.alarm_num))
         self.draw_vert_span(x=pos)
         self.prev_alarm_pos = pos
-        self.add_alarm_text(pos)
-        # Remember alarm_times
-        this_time = datetime.datetime.now().strftime(ui_config.Measurements.time_format)
+        self.add_alarm_text()
+        this_time = datetime.datetime.now().strftime(ui_config.Measurements.time_format.value)  # 确保 time_format 是字符串
         self.db_manager.session.alarm_times.append(this_time)
 
-    def add_alarm_text(self, pos: int) -> None:
+    def add_alarm_text(self) -> None:
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         alarm_text = f"Alarm {self.alarm_num} at {current_time}"
         self.alarm_text_label.config(text=alarm_text)
