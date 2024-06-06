@@ -21,6 +21,7 @@ class ThreadManager:
         self.reading_thread = threading.Thread(target=self.connect, daemon=True)
         self.time_delay = uc.Measurements.thread_delay.value
         self.alarm_num = 0
+        self.ser = None
 
     def run(self):
         self.start_thread()
@@ -91,6 +92,16 @@ class ThreadManager:
 
             self.app.update_sensor_values(new_vals)
 
+    def send_command(self, command: str) -> None:
+        """ Send a command to the device """
+        if self.ser and self.ser.is_open:
+            self.ser.write(command.encode())
+            time.sleep(0.5)  # Wait for the command to be processed
+            response = self.ser.readline().decode('utf-8').rstrip()
+            print(f"Command: {command}, Response: {response}")
+        else:
+            print("Serial port did not get this command. Please debug.")
+
 def main_test():
     test_proc = ThreadManager(app_title="Testing Data Validation")
     sample_data = {"Sensor 2": [], "Sensor 4": []}
@@ -117,7 +128,6 @@ def main_test():
     test_proc.app.create_clock_label(proc_time_label)
 
     test_proc.run()
-
 
 if __name__ == '__main__':
     main_test()
