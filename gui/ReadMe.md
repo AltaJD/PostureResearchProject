@@ -31,13 +31,15 @@ Add reports generating fuction, including: user used the device for (duration), 
 ### 14. Data cleaning (Xijun is working on this)
 Replace extream values with the last value. And add low-pass filter(if needed).
 ### 15. Alarm date and time recording (TODO)
-Alarm generated at XX:XX AM/PM, dd-mm-yy. Lasted for XX mins.
+Alarm generated at XX:XX AM/PM, dd-mm-yy. Lasted for XX mins. 
 ### 16. New Data Entry upon Registration (DONE)
 The app requests and store more data, such as age, gender, weight, height, and shoulder size [XL, L, M, S, XS]
 ### 17. Pause monitoring (TODO)
 User have the choice to Pause Monitoring for X mins.
 ### 18. Neutral and Extreme Posture Data collection (TODO)
 After a new user has created a profile, give Instruction: Please make two posture(1.round shoulder with extream poking chin, 2. normal shoulder with neck extention) at 3 different distances(65/70/80cm), one by one. User should stay still at each posture for at least 10s. Data will be used to culculate individual fleibility. 
+### 19. General Setting (TODO)
+User may be able to set how frequent they want to be notified. "I want to be notified if I maintained a bad posture for 3/5/10/X mins."
 
 ## Installation and Usage
 ### 1. Clone the repository:
