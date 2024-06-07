@@ -41,6 +41,11 @@ After a new user has created a profile, give Instruction: Please make two postur
 ### 19. General Setting (TODO)
 1.User may be able to set how frequent they want to be notified. "I want to be notified if I maintained a bad posture for 3/5/10/X mins."
 2. User can set if they want alarm sound or mute device. Sound enable:'!s1#', Sound disable:'!s0#'.
+### 20. Model Tuning and Deployment （TODO, Xijun）
+The next step will be to continue tuning the model and make deployment attempts. Areas of concern: computational intensive？ memory usage？
+### 21.Interactive graph for error reporting （TODO, Important）
+In the first phase, Xijun trained the model using data from static postures. In the second phase, we will test the correctness of the model in monitoring dynamic postures. Reporting wrong prediction of the model is a very important approach to new data labeling and model retraining.
+Add error reporting: Turn the real time image into an interactive image where the user can click on any point of time/time window on the x-axis. When that point of time (window) is clicked, the local time as well as the posture prediction class is recorded. Save all sensor data, predicted class, and actual class within this time window. The saved data is used to retrain the model. 
 
 ## Installation and Usage
 ### 1. Clone the repository:
