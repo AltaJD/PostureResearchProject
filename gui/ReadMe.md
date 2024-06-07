@@ -44,7 +44,7 @@ After a new user has created a profile, give Instruction: Please make two postur
 ### 20. Model Tuning and Deployment （TODO, Xijun）
 The next step will be to continue tuning the model and make deployment attempts. Areas of concern: computational intensive？ memory usage？
 ### 21.Interactive graph for error reporting （TODO, Important）
-In the first phase, Xijun trained the model using data from static postures. In the second phase, we will test the correctness of the model in monitoring dynamic postures. Reporting wrong prediction of the model is a very important approach to new data labeling and model retraining.
+In the first phase, Xijun trained the model using data from static postures. In the second phase, we will test the correctness of the model in monitoring dynamic postures. Reporting wrong prediction of the model is a very important approach to check device accuracy, new data labeling and model retraining.
 Add error reporting: Turn the real time image into an interactive image where the user can click on any point of time/time window on the x-axis. When that point of time (window) is clicked, the local time as well as the posture prediction class is recorded. Save all sensor data, predicted class, and actual class within this time window. The saved data is used to retrain the model. 
 
 ## Installation and Usage
