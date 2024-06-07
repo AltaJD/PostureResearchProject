@@ -8,7 +8,8 @@ import datetime
 import ui_config
 from database_manager import DatabaseManager, UserDetails
 from custom_widgets import Clock, TkCustomImage, UserDetailsWindow, FileUploadWindow, UserRegistrationWindow
-
+from tensorflow.keras.models import load_model
+import numpy as np
 
 class App(tk.Tk):
     """ GUI to show Data Storage
@@ -65,6 +66,8 @@ class App(tk.Tk):
         self.create_major_frames()
         self.add_header_elements(title=ui_config.ElementNames.app_title.value)
         self.add_body_elements()
+
+        self.model = load_model('model.h5') #model for testing code. not the final one
 
     def create_major_frames(self):
         self.header_frame.pack(fill='both', expand=False)
@@ -132,10 +135,15 @@ class App(tk.Tk):
         # RAISE ALARM
         sensor_2, sensor_4 = "Sensor 2", "Sensor 4"
         if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:
+            recent_data = np.array([[data[sensor_2][-1], data[sensor_4][-1]]])
+            prediction = self.model.predict(recent_data)
+            if prediction[0][0] == 0:  # if class = 0
+                self.update_alarm_num(pos=len(data[sensor_2]) - 1)
+
             # if 100 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 38.6:  ##RANGE MAY BE CHANGED
             #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-            if 170 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 66.54:  ##RANGE MAY BE CHANGED
-                self.update_alarm_num(pos=len(data[sensor_2]) - 1)
+            # if 170 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 66.54:  ##RANGE MAY BE CHANGED
+            #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
             # if 300 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 100.5:  ##RANGE MAY BE CHANGED
             #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
         # if sensor 2 decrease and sensor 4 increase at the same time. this may suggest that the body is tilting/shifting to the sides.
