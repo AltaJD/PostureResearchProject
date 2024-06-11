@@ -10,6 +10,8 @@ from database_manager import DatabaseManager, UserDetails
 from custom_widgets import Clock, TkCustomImage, UserDetailsWindow, FileUploadWindow, UserRegistrationWindow
 from tensorflow.keras.models import load_model
 import numpy as np
+import os
+import pandas as pd
 
 class App(tk.Tk):
     """ GUI to show Data Storage
@@ -67,7 +69,85 @@ class App(tk.Tk):
         self.add_header_elements(title=ui_config.ElementNames.app_title.value)
         self.add_body_elements()
 
-        self.model = load_model('model.h5') #model for testing code. not the final one
+        self.model = load_model('model_all.h5')
+        self.current_user_id = None
+        self.current_user_features = None
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        self.csv_path = os.path.join(base_path, 'data', 'users', 'logins.csv')
+
+    def load_user_data(self, filepath: str):
+        try:
+            data = pd.read_csv(filepath)
+            print(f"CSV data loaded successfully from {filepath}")
+            print(data.head())
+            return data
+        except Exception as e:
+            print(f"Error loading CSV data: {e}")
+            return None
+
+    def process_user_info(self, user_info):
+        try:
+            birth_date = datetime.datetime.strptime(user_info['Age'], '%m-%d-%Y')
+            age = int((datetime.datetime.now() - birth_date).days / 365.25)
+
+            shoulder_size_map = {'XS': 0, 'S': 1, 'M': 2, 'L': 3, 'XL': 4}
+            size = shoulder_size_map.get(user_info['Shoulder Size'], -1)
+
+            height = float(user_info['Height']) / 100
+            weight = float(user_info['Weight'])
+
+            flexibility = 259  # NEED TO BE CHANGED
+
+            features = np.array([age, size, weight, height, flexibility], dtype=float)
+            print(f"Processed user features: {features}")
+            return features
+        except Exception as e:
+            print(f"Error processing user info: {e}")
+            return None
+
+    def detect_anomaly(self, data: dict):
+        print("detect_anomaly called with data:", data)
+
+        sensor_2, sensor_4 = "Sensor 2", "Sensor 4"
+        if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:
+            recent_data = np.array([[data[sensor_2][-1], data[sensor_4][-1]]])
+            print("recent_data:", recent_data)
+
+            if self.current_user_features is None:
+                print("No user features available.")
+                return
+
+            print(f"User features: {self.current_user_features}")
+
+            sensor4_2_diff = data[sensor_4][-1] - data[sensor_2][-1]
+            length = data[sensor_4][-1] * np.cos(np.radians(20)) - data[sensor_2][-1]
+            ratio = length / self.current_user_features[4]  # flexibility
+            cos_20 = np.cos(np.radians(20))
+            sin_20 = np.sin(np.radians(20))
+            tangent_d = (data[sensor_4][-1] * cos_20 - data[sensor_2][-1]) / (data[sensor_4][-1] * sin_20)
+            degree = np.degrees(np.arctan(tangent_d))
+
+            dynamic_features = np.array(
+                [length, degree, sensor4_2_diff, recent_data[0, 0], recent_data[0, 1], self.current_user_features[4],
+                 ratio])
+            input_data = np.hstack((self.current_user_features[:4], dynamic_features))
+            print("input_data:", input_data)
+
+            prediction = self.model.predict(input_data.reshape(1, -1))
+            print("prediction:", prediction)
+            if prediction[0][0] == 0:
+                self.update_alarm_num(pos=len(data[sensor_2]) - 1)
+                print("Alarm raised.")
+
+    def user_login(user_details):
+        global user_features
+        user_features = extract_features(user_details)
+        print(f"User features loaded: {user_features}")
+
+
+    def data_received(sensor_data):
+        data = parse_sensor_data(sensor_data)
+        self.detect_anomaly(data)
 
     def create_major_frames(self):
         self.header_frame.pack(fill='both', expand=False)
@@ -130,23 +210,6 @@ class App(tk.Tk):
             self.detect_anomaly(self.sensor_values)
             self.graph_canvas.draw()
         return lines
-
-    def detect_anomaly(self, data: dict):
-        # RAISE ALARM
-        sensor_2, sensor_4 = "Sensor 2", "Sensor 4"
-        if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:
-            recent_data = np.array([[data[sensor_2][-1], data[sensor_4][-1]]])
-            prediction = self.model.predict(recent_data)
-            if prediction[0][0] == 0:  # if class = 0
-                self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-
-            # if 100 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 38.6:  ##RANGE MAY BE CHANGED
-            #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-            # if 170 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 66.54:  ##RANGE MAY BE CHANGED
-            #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-            # if 300 >= (data[sensor_4][-1] - data[sensor_2][-1]) >= 100.5:  ##RANGE MAY BE CHANGED
-            #     self.update_alarm_num(pos=len(data[sensor_2]) - 1)
-        # if sensor 2 decrease and sensor 4 increase at the same time. this may suggest that the body is tilting/shifting to the sides.
 
     def update_sensor_values(self, new_data: dict) -> None:
         """ The new data should have the format:
@@ -363,6 +426,26 @@ class App(tk.Tk):
         pop_up.show_message_frame(subject="Success",
                                   details=f"Welcome back, {self.db_manager.session.full_name}")
         self.set_user_photo()
+
+        print(f"Checking if file exists at path: {self.csv_path}")
+        if os.path.exists(self.csv_path):
+            print(f"File found at path: {self.csv_path}")
+            self.user_data = self.load_user_data(self.csv_path)
+            print(f"User data loaded: {self.user_data.head()}")
+
+            print(f"User details: {self.db_manager.session.user_details.__dict__}")
+
+            user_info = {
+                'Age': self.db_manager.session.user_details.age,
+                'Shoulder Size': self.db_manager.session.user_details.shoulder_size,
+                'Height': self.db_manager.session.user_details.height,
+                'Weight': self.db_manager.session.user_details.weight
+            }
+            self.current_user_features = self.process_user_info(user_info)
+            print(f"User features loaded and set: {self.current_user_features}")
+        else:
+            print(f"File not found at path: {self.csv_path}")
+
         # Change button config
         sign_in_button: tk.Button = self.control_buttons[ui_config.ElementNames.sign_in_button_txt.value]
         sign_in_button.configure(text=ui_config.ElementNames.sign_out_button_txt.value, command=self.sign_out)
@@ -379,6 +462,9 @@ class App(tk.Tk):
         # Forget session
         self.db_manager.session.reset()
         self.set_user_photo()
+
+        self.current_user_features = None
+
         # Change button config
         sign_in_button: tk.Button = self.control_buttons[ui_config.ElementNames.sign_in_button_txt.value]
         sign_in_button.configure(text=ui_config.ElementNames.sign_in_button_txt.value, command=self.show_sign_in_popup)
