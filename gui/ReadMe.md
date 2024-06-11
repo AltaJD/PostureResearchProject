@@ -30,7 +30,7 @@ The codebase can be refactored to improve readability, maintainability, and code
 Add reports generating fuction, including: user used the device for (duration), alarm generated during (local time), etc. So that user can understand their postural behavior.
 ### 14. Data cleaning (Xijun is working on this)
 Replace extream values with the last value. And add low-pass filter(if needed).
-### 15. Alarm date and time recording (TODO)
+### 15. Alarm date and time recording (DONE)
 Alarm generated at XX:XX AM/PM, dd-mm-yy. Lasted for XX mins. 
 ### 16. New Data Entry upon Registration (DONE)
 The app requests and store more data, such as age, gender, weight, height, and shoulder size [XL, L, M, S, XS]
