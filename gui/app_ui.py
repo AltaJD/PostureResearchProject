@@ -96,7 +96,7 @@ class App(tk.Tk):
             height = float(user_info['Height']) / 100
             weight = float(user_info['Weight'])
 
-            flexibility = 259  # NEED TO BE CHANGED
+            flexibility = 150  # NEED TO BE CHANGED
 
             features = np.array([age, size, weight, height, flexibility], dtype=float)
             print(f"Processed user features: {features}")
@@ -106,7 +106,7 @@ class App(tk.Tk):
             return None
 
     def detect_anomaly(self, data: dict):
-        print("detect_anomaly called with data:", data)
+        #print("detect_anomaly called with data:", data)
 
         sensor_2, sensor_4 = "Sensor 2", "Sensor 4"
         if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:

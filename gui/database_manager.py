@@ -192,12 +192,12 @@ class DatabaseManager:
         The function receive the sensor data collected by app
         and transform to csv file named according to the user id
         """
-        path: str = self.values_folder+f'/{self.session.user_id}'
+        path: str = f'{self.values_folder}/{self.session.user_id}.csv' #csv file name wrong
         df = pd.DataFrame.from_dict(data)
         time_ds = pd.Series(data=time)
         df["Time"] = time_ds
-        df.to_csv(path)
-        print("Total alarm type: ", self.get_total_alarm_time(), " minutes")
+        df.to_csv(path, index=False)
+        print("Total alarm time: ", self.get_total_alarm_time(), " minutes")
         print(f"Data has been saved to {path}")
 
     def get_total_alarm_time(self) -> float:
@@ -205,10 +205,8 @@ class DatabaseManager:
             return 0.0
         # Calculate the time difference in minutes
         time_format: str = ui_config.Measurements.time_format.value
-        first_time = datetime.datetime.strptime(date_string=self.session.alarm_times[0],
-                                                format=time_format)
-        last_time = datetime.datetime.strptime(date_string=self.session.alarm_times[-1],
-                                               format=time_format)
+        first_time = datetime.datetime.strptime(self.session.alarm_times[0], time_format)
+        last_time = datetime.datetime.strptime(self.session.alarm_times[-1], time_format)
         time_diff = (last_time - first_time).total_seconds() / 60
         return time_diff
 
