@@ -12,7 +12,9 @@ from tensorflow.keras.models import load_model
 import numpy as np
 import os
 import pandas as pd
-
+from serial_manager import SerialManager
+from matplotlib.widgets import SpanSelector
+from matplotlib.patches import Rectangle
 class App(tk.Tk):
     """ GUI to show Data Storage
     sensor_values is a dict of list of the values from the sensors:
@@ -293,7 +295,63 @@ class App(tk.Tk):
         alarm_frame.pack(side=tk.BOTTOM, fill="x", pady=10)
         self.alarm_text_label = tk.Label(alarm_frame, text="", font=("Helvetica", 12), fg="red")
         self.alarm_text_label.pack(side=tk.LEFT, padx=10)
-        
+
+        # 添加 SpanSelector 用于选择时间段
+        self.selected_span = None
+        self.span_rect = None
+
+        def on_select_span(vmin, vmax):
+            self.selected_span = (vmin, vmax)
+            if self.span_rect:
+                self.span_rect.remove()
+            self.span_rect = ax.add_patch(
+                Rectangle((vmin, ax.get_ylim()[0]), vmax - vmin, ax.get_ylim()[1] - ax.get_ylim()[0],
+                          color='red', alpha=0.3))
+            self.graph_canvas.draw()
+
+        self.span_selector = SpanSelector(
+            ax, on_select_span, "horizontal", useblit=True, minspan=0.1
+        )
+
+        # 添加保存按钮
+        save_button = tk.Button(self.graph_frame, text="Save Selected Data", command=self.save_selected_data)
+        save_button.pack(side=tk.BOTTOM, pady=10)
+
+    def save_selected_data(self):
+        if self.selected_span is None:
+            print("No data selected")
+            return
+
+        start, end = self.selected_span
+        print(f"Selected span: {start} to {end}")
+
+        # 提取选定时间段的数据
+        data_dict = {'Time': []}
+        max_length = 0
+        for line in self.graph_lines:
+            sensor_name = line.get_label()
+            x = line.get_xdata()
+            y = line.get_ydata()
+            mask = (x >= start) & (x <= end)
+            mask_indices = np.where(mask)[0]
+            sensor_data = [y[i] for i in mask_indices if i < len(y)]
+            time_data = [self.sensor_time[i] for i in mask_indices if i < len(self.sensor_time)]
+            if len(sensor_data) > max_length:
+                max_length = len(sensor_data)
+            data_dict[sensor_name] = sensor_data
+            data_dict['Time'] = time_data  # Assumes that time data will be consistent across sensors
+
+        # Ensure all lists in data_dict are of the same length by padding with NaN
+        for key in data_dict:
+            while len(data_dict[key]) < max_length:
+                data_dict[key].append(np.nan)
+
+        # 创建 DataFrame 并导出为 CSV 文件
+        result_df = pd.DataFrame(data_dict)
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+        if file_path:
+            result_df.to_csv(file_path, index=False)
+            print(f"Data saved to {file_path}")
     def get_axes_values(self, sensor: str, limit=None):
         if self.sensor_values.get(sensor):
             x = list(range(len(self.sensor_values[sensor])))

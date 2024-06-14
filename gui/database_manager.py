@@ -192,7 +192,14 @@ class DatabaseManager:
         The function receive the sensor data collected by app
         and transform to csv file named according to the user id
         """
-        path: str = f'{self.values_folder}/{self.session.user_id}.csv' #csv file name wrong
+        # Ensure the user ID is a string and print it for debugging
+        user_id = str(self.session.user_id)
+        print(f"User ID: {user_id}")
+
+        # Correctly format the path with the user ID
+        path: str = f'{self.values_folder}/{user_id}.csv'
+        print(f"Path: {path}")
+
         df = pd.DataFrame.from_dict(data)
         time_ds = pd.Series(data=time)
         df["Time"] = time_ds
