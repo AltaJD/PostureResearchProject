@@ -98,7 +98,7 @@ class App(tk.Tk):
             height = float(user_info['Height']) / 100
             weight = float(user_info['Weight'])
 
-            flexibility = 150  # NEED TO BE CHANGED
+            flexibility = 150  # NEED TO BE CHANGED according to posture_data_collec.py
 
             features = np.array([age, size, weight, height, flexibility], dtype=float)
             print(f"Processed user features: {features}")
@@ -145,7 +145,6 @@ class App(tk.Tk):
         global user_features
         user_features = extract_features(user_details)
         print(f"User features loaded: {user_features}")
-
 
     def data_received(sensor_data):
         data = parse_sensor_data(sensor_data)
@@ -325,7 +324,6 @@ class App(tk.Tk):
         start, end = self.selected_span
         print(f"Selected span: {start} to {end}")
 
-        # 提取选定时间段的数据
         data_dict = {'Time': []}
         max_length = 0
         for line in self.graph_lines:
@@ -339,19 +337,19 @@ class App(tk.Tk):
             if len(sensor_data) > max_length:
                 max_length = len(sensor_data)
             data_dict[sensor_name] = sensor_data
-            data_dict['Time'] = time_data  # Assumes that time data will be consistent across sensors
+            data_dict['Time'] = time_data
 
         # Ensure all lists in data_dict are of the same length by padding with NaN
         for key in data_dict:
             while len(data_dict[key]) < max_length:
                 data_dict[key].append(np.nan)
 
-        # 创建 DataFrame 并导出为 CSV 文件
         result_df = pd.DataFrame(data_dict)
         file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
         if file_path:
             result_df.to_csv(file_path, index=False)
             print(f"Data saved to {file_path}")
+
     def get_axes_values(self, sensor: str, limit=None):
         if self.sensor_values.get(sensor):
             x = list(range(len(self.sensor_values[sensor])))
