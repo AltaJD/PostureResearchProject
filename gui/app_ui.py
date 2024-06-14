@@ -108,7 +108,7 @@ class App(tk.Tk):
             return None
 
     def detect_anomaly(self, data: dict):
-        #print("detect_anomaly called with data:", data)
+        #print("detect_anomaly called with data:", data) do not need to print out. only for debuggung.
 
         sensor_2, sensor_4 = "Sensor 2", "Sensor 4"
         if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:
@@ -295,7 +295,7 @@ class App(tk.Tk):
         self.alarm_text_label = tk.Label(alarm_frame, text="", font=("Helvetica", 12), fg="red")
         self.alarm_text_label.pack(side=tk.LEFT, padx=10)
 
-        # 添加 SpanSelector 用于选择时间段
+        # time selection
         self.selected_span = None
         self.span_rect = None
 
@@ -312,7 +312,7 @@ class App(tk.Tk):
             ax, on_select_span, "horizontal", useblit=True, minspan=0.1
         )
 
-        # 添加保存按钮
+        # added save button for selected time window. may change to auto save in a certain path
         save_button = tk.Button(self.graph_frame, text="Save Selected Data", command=self.save_selected_data)
         save_button.pack(side=tk.BOTTOM, pady=10)
 
