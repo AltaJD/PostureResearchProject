@@ -5,9 +5,11 @@ import ui_config as uc
 import random
 import serial
 import re
-
+from posture_data_collection import PostureDataCollection
+import wx
+from serial_manager import SerialManager
 class ThreadManager:
-    """ The prototype consists of 2-4 sensors,
+    """ The prototype consists of 2 TOF sensors and 1 image sensor,
     based on their data, we create the graph in one subplot to show
     Procedure: read and store data
     """
@@ -103,6 +105,7 @@ class ThreadManager:
             print("Serial port did not get this command. Please debug.")
 
 def main_test():
+    app = wx.App(False)
     test_proc = ThreadManager(app_title="Testing Data Validation")
     sample_data = {"Sensor 2": [], "Sensor 4": []}
     test_proc.app.sensor_values = sample_data
@@ -127,7 +130,12 @@ def main_test():
     test_proc.app.create_alarms_label(num_alarms_label, str(0))
     test_proc.app.create_clock_label(proc_time_label)
 
+    # Xijun is woking on:
+    # frame = PostureDataCollection(None, title="Posture Data Collection")
+    # frame.Show()
+
     test_proc.run()
+    app.MainLoop()
 
 if __name__ == '__main__':
     main_test()
