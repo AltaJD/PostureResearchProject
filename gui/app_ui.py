@@ -98,7 +98,7 @@ class App(tk.Tk):
             height = float(user_info['Height']) / 100
             weight = float(user_info['Weight'])
 
-            flexibility = 150  # NEED TO BE CHANGED according to posture_data_collec.py
+            flexibility = 170  # NEED TO BE CHANGED according to posture_data_collec.py
 
             features = np.array([age, size, weight, height, flexibility], dtype=float)
             print(f"Processed user features: {features}")
