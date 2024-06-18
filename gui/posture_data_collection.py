@@ -1,48 +1,38 @@
-import wx
+import tkinter as tk
+from tkinter import messagebox
 import time
 import csv
 from datetime import datetime
 import serial
 import re
 from serial_manager import SerialManager
-# Xijun is still debugging this file
-class PostureDataCollection(wx.Frame):
-    def __init__(self, parent, title):
-        super(PostureDataCollection, self).__init__(parent, title=title, size=(400, 300))
 
-        self.InitUI()
-        self.Centre()
-        self.Show()
 
+class PostureDataCollection(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Posture Data Collection")
+        self.geometry("400x300")
 
         self.serial_manager = SerialManager()
 
-    def InitUI(self):
-        panel = wx.Panel(self)
+        self.init_ui()
 
-        vbox = wx.BoxSizer(wx.VERTICAL)
+    def init_ui(self):
+        self.instruction_text = tk.Label(self, text="Pos 1 for 3 sec：\n1. RS+PC\n2. NS+NE\nat（65/70/80cm）")
+        self.instruction_text.pack(pady=15)
 
-        self.instruction_text = wx.StaticText(panel, label="Pos 1 for 3 sec：\n"
-                                                           "1. RS+PC\n"
-                                                           "2. NS+NE\n"
-                                                           "at（65/70/80cm）")
-        vbox.Add(self.instruction_text, flag=wx.ALL | wx.EXPAND, border=15)
+        self.start_button = tk.Button(self, text="Start collecting", command=self.on_start)
+        self.start_button.pack(pady=15)
 
-        self.start_button = wx.Button(panel, label="Start collecting")
-        self.start_button.Bind(wx.EVT_BUTTON, self.OnStart)
-        vbox.Add(self.start_button, flag=wx.ALL | wx.CENTER, border=15)
-
-        panel.SetSizer(vbox)
-
-    def OnStart(self, event):
+    def on_start(self):
         distances = [65, 70, 80]
         postures = ["RS+PC", "NS+NE"]
         data = []
 
         for posture in postures:
             for distance in distances:
-                wx.MessageBox(f"Please stay still：{posture}，at distance：{distance}cm，for 3 sec。", "Reminder",
-                              wx.OK | wx.ICON_INFORMATION)
+                messagebox.showinfo("Reminder", f"Please stay still：{posture}，at distance：{distance}cm，for 3 sec。")
                 time.sleep(3)
                 readings = self.read_sensor_data()
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -50,7 +40,7 @@ class PostureDataCollection(wx.Frame):
                     data.append([timestamp, posture, distance, reading])
 
         self.save_data(data)
-        wx.MessageBox("Data collection done", "Reminder", wx.OK | wx.ICON_INFORMATION)
+        messagebox.showinfo("Reminder", "Data collection done")
 
     def read_sensor_data(self):
         readings = []
@@ -83,6 +73,5 @@ class PostureDataCollection(wx.Frame):
 
 
 if __name__ == '__main__':
-    app = wx.App(False)
-    frame = PostureDataCollection(None, title="Posture Data Collection")
-    app.MainLoop()
+    app = PostureDataCollection()
+    app.mainloop()
