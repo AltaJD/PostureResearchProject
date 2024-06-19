@@ -39,7 +39,7 @@ User have the choice to Pause Monitoring for X mins.
 ### 18. Neutral and Extreme Posture Data collection (TODO, Xijun)
 After a new user has created a profile, give Instruction: Please make two posture(1.round shoulder with extream poking chin, 2. normal shoulder with neck extention) at 3 different distances(65/70/80cm), one by one. User should stay still at each posture for at least 10s. Data will be used to culculate individual fleibility. 
 ### 19. General Setting (TODO)
-1.User may be able to set how frequent they want to be notified. "I want to be notified if I maintained a bad posture for 3/5/10/X mins."
+1. User may be able to set how frequent they want to be notified. "I want to be notified if I maintained a bad posture for 3/5/10/X mins."
 2. User can set if they want alarm sound or mute device. Sound enable:'!s1#', Sound disable:'!s0#'.
 ### 20. Model Tuning and Deployment （TODO, Xijun）
 The next step will be to continue tuning the model and make deployment attempts. Areas of concern: computational intensive？ memory usage？

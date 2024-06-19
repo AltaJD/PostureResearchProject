@@ -19,15 +19,17 @@ class ElementNames(Enum):
 
     alarm_num_label = "Number of Alarms"
     processing_time_label = "Processing Time"
+    data_notes_label = "Data Notes"
 
-    pause_button_txt = "Stop Graph"
+    pause_button_txt = "Pause Graph"
     resume_button_txt = "Resume Graph"
     close_button_txt = "Close APP"
-    save_data_button_txt = "Save Data"
+    save_data_button_txt = "Save All Data"
     sign_in_button_txt = "Sign in"
     sign_out_button_txt = "Sign out"
     register_button_txt = "Register"
     edit_photo_button_txt = "Edit Photo"
+    save_selected_button_txt = "Save Selected Data"
 
     sign_in_error = "The user does not exists. Please try again!"
 
@@ -79,6 +81,6 @@ class FilePaths(Enum):
     """ Notes:
     Absolute path for user photos are preferred
     """
-    user_photo_icon = "./data/img/user_photo.jpeg"
-    user_login_db_path = "./data/users/logins.csv"
-    values_folder_path = "./data/values"
+    user_photo_icon = 'gui/data/img/user_photo.jpeg'
+    user_login_db_path = "gui/data/users/logins.csv"
+    values_folder_path = "gui/data/values"

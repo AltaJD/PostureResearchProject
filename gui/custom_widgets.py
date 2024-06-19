@@ -16,7 +16,7 @@ class TkCustomImage:
     def __init__(self, file_path: str, w: int, h: int):
         self.original_image = Image.open(file_path)
         self.scaled_image = self.original_image.resize((w, h), resample=Image.LANCZOS)
-        self.tk_image = ImageTk.PhotoImage(image=self.scaled_image)
+        self.tk_image: tk.PhotoImage = ImageTk.PhotoImage(image=self.scaled_image)
 
     def attach_image(self, master, row: int, col: int) -> tk.Label:
         image_label = tk.Label(master, image=self.tk_image)
@@ -249,3 +249,30 @@ class FileUploadWindow(AbstractWindow):
 
     def get_file_path(self) -> str:
         return self.file_path_entry.get()
+
+
+class NotesEntryFrame(tk.Frame):
+    def __init__(self, parent, title=""):
+        super().__init__(parent)
+        self.add_header_text(title)
+        self.paragraph_entry = tk.Text(self, height=10, width=50, wrap="word")
+        self.paragraph_entry.pack(side=tk.LEFT, fill=tk.BOTH, padx=10, pady=10)
+        self.control_button_frame = tk.Frame(self, pady=5, padx=5)
+        self.control_button_frame.pack(side=tk.BOTTOM, fill='x')
+        self.add_scroll_bar()
+
+    def add_header_text(self, title: str) -> None:
+        header_label = tk.Label(self, text=title, font=ui_config.Fonts.title_font.value)
+        header_label.pack(side=tk.TOP, padx=10, pady=10)
+
+    def add_scroll_bar(self) -> None:
+        scrollbar = tk.Scrollbar(self, command=self.paragraph_entry.yview)
+        scrollbar.pack(side=tk.RIGHT, fill="y")
+        self.paragraph_entry.config(yscrollcommand=scrollbar.set)
+
+    def add_button(self, text: str, func: Callable) -> None:
+        save_button = tk.Button(self.control_button_frame, text=text, command=func)
+        save_button.pack(side=tk.LEFT, fill='x')
+
+    def get_notes(self) -> str:
+        return self.paragraph_entry.get("1.0", tk.END).strip()

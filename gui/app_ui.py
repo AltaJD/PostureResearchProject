@@ -2,19 +2,28 @@ import tkinter as tk
 from tkinter import filedialog
 from typing import Callable
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.animation import FuncAnimation
 import datetime
 import ui_config
 from database_manager import DatabaseManager, UserDetails
-from custom_widgets import Clock, TkCustomImage, UserDetailsWindow, FileUploadWindow, UserRegistrationWindow
+from custom_widgets import (Clock,
+                            TkCustomImage,
+                            UserDetailsWindow,
+                            FileUploadWindow,
+                            UserRegistrationWindow,
+                            NotesEntryFrame)
 from tensorflow.keras.models import load_model
 import numpy as np
 import os
 import pandas as pd
-from serial_manager import SerialManager
 from matplotlib.widgets import SpanSelector
 from matplotlib.patches import Rectangle
+from typing import Union
+import sys
+# from serial_manager import SerialManager
+
+
 class App(tk.Tk):
     """ GUI to show Data Storage
     sensor_values is a dict of list of the values from the sensors:
@@ -40,6 +49,7 @@ class App(tk.Tk):
         self.graph_size = (12, 4)
         self.info_panel_wnum = 0
         self.prev_alarm_pos = 0
+        self.user_data = None
         # Structure of each frame
         self.header_row = 0
         self.header_frame = tk.Frame(self)
@@ -52,14 +62,24 @@ class App(tk.Tk):
         self.info_panel.grid(row=self.body_row, column=0, padx=10, pady=5)
 
         self.alarm_num_label = None
+        self.alarm_text_label = None
+        # time selection
+        self.selected_span = None
+        self.span_rect = None
+        self.span_selector = None
         self.graph_frame = None
-        self.control_frame = None
         self.graph_canvas = None
         self.graph_ax = None
         self.figure = None
         self.func_ani = None
+        self.toolbar = None
+
+        self.note_frame = None
+        self.control_frame = None
+
         self.user_photo = None
         self.user_name = None
+
         self.sign_in_popup = None
         self.registration_popup = None
         self.edit_photo_popup = None
@@ -71,45 +91,14 @@ class App(tk.Tk):
         self.add_header_elements(title=ui_config.ElementNames.app_title.value)
         self.add_body_elements()
 
-        self.model = load_model('model_all.h5')
+        # self.model = load_model('model_all.h5')
         self.current_user_id = None
         self.current_user_features = None
         base_path = os.path.dirname(os.path.abspath(__file__))
         self.csv_path = os.path.join(base_path, 'data', 'users', 'logins.csv')
 
-    def load_user_data(self, filepath: str):
-        try:
-            data = pd.read_csv(filepath)
-            print(f"CSV data loaded successfully from {filepath}")
-            print(data.head())
-            return data
-        except Exception as e:
-            print(f"Error loading CSV data: {e}")
-            return None
-
-    def process_user_info(self, user_info):
-        try:
-            birth_date = datetime.datetime.strptime(user_info['Age'], '%m-%d-%Y')
-            age = int((datetime.datetime.now() - birth_date).days / 365.25)
-
-            shoulder_size_map = {'XS': 0, 'S': 1, 'M': 2, 'L': 3, 'XL': 4}
-            size = shoulder_size_map.get(user_info['Shoulder Size'], -1)
-
-            height = float(user_info['Height']) / 100
-            weight = float(user_info['Weight'])
-
-            flexibility = 170  # NEED TO BE CHANGED according to posture_data_collec.py
-
-            features = np.array([age, size, weight, height, flexibility], dtype=float)
-            print(f"Processed user features: {features}")
-            return features
-        except Exception as e:
-            print(f"Error processing user info: {e}")
-            return None
-
     def detect_anomaly(self, data: dict):
-        #print("detect_anomaly called with data:", data) do not need to print out. only for debuggung.
-
+        # print("detect_anomaly called with data:", data) do not need to print out. only for debugging.
         sensor_2, sensor_4 = "Sensor 2", "Sensor 4"
         if sensor_2 in data and sensor_4 in data and data[sensor_2] and data[sensor_4]:
             recent_data = np.array([[data[sensor_2][-1], data[sensor_4][-1]]])
@@ -140,15 +129,6 @@ class App(tk.Tk):
             if prediction[0][0] == 0:
                 self.update_alarm_num(pos=len(data[sensor_2]) - 1)
                 print("Alarm raised.")
-
-    def user_login(user_details):
-        global user_features
-        user_features = extract_features(user_details)
-        print(f"User features loaded: {user_features}")
-
-    def data_received(sensor_data):
-        data = parse_sensor_data(sensor_data)
-        self.detect_anomaly(data)
 
     def create_major_frames(self):
         self.header_frame.pack(fill='both', expand=False)
@@ -190,13 +170,13 @@ class App(tk.Tk):
 
     def add_body_elements(self):
         self.create_graph()
-        self.start_graph_refreshing()
         self.create_control_frame()
 
     def run_app(self) -> None:
         self.mainloop()
 
-    def update_graph(self, frame=None) -> list:
+    def update_graph(self, event=None) -> list:
+        # Param event is essential for correct update of the graph
         lines = []
         lim: int = ui_config.Measurements.graph_x_limit.value
         for i, sens_name in enumerate(self.sensor_values.keys()):
@@ -236,11 +216,6 @@ class App(tk.Tk):
         self.add_alarm_text()
         this_time = datetime.datetime.now().strftime(ui_config.Measurements.time_format.value)  # 确保 time_format 是字符串
         self.db_manager.session.alarm_times.append(this_time)
-
-    def add_alarm_text(self) -> None:
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        alarm_text = f"Alarm {self.alarm_num} at {current_time}"
-        self.alarm_text_label.config(text=alarm_text)
 
     def draw_vert_span(self, x: int, width=1):
         # Add a vertical span to the background
@@ -286,20 +261,28 @@ class App(tk.Tk):
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        # # Add the navigation toolbar FIXME
+        # self.toolbar = NavigationToolbar2Tk(canvas, self.graph_frame)
+        # self.toolbar.update()
+        # canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
         self.graph_canvas = canvas
         self.figure = fig
         self.graph_ax = ax
+
+        self.func_ani = FuncAnimation(self.figure,
+                                      func=self.update_graph,
+                                      interval=100,
+                                      blit=False,
+                                      repeat=False)  # remember the object
 
         alarm_frame = tk.LabelFrame(self.graph_frame, text="Alarm Time", font=("Helvetica", 12))
         alarm_frame.pack(side=tk.BOTTOM, fill="x", pady=10)
         self.alarm_text_label = tk.Label(alarm_frame, text="", font=("Helvetica", 12), fg="red")
         self.alarm_text_label.pack(side=tk.LEFT, padx=10)
 
-        # time selection
-        self.selected_span = None
-        self.span_rect = None
-
-        def on_select_span(vmin, vmax):
+        def on_select_span(vmin: int, vmax: int):
             self.selected_span = (vmin, vmax)
             if self.span_rect:
                 self.span_rect.remove()
@@ -312,13 +295,9 @@ class App(tk.Tk):
             ax, on_select_span, "horizontal", useblit=True, minspan=0.1
         )
 
-        # added save button for selected time window. may change to auto save in a certain path
-        save_button = tk.Button(self.graph_frame, text="Save Selected Data", command=self.save_selected_data)
-        save_button.pack(side=tk.BOTTOM, pady=10)
-
     def save_selected_data(self):
         if self.selected_span is None:
-            print("No data selected")
+            print("No data selected", file=sys.stderr)
             return
 
         start, end = self.selected_span
@@ -339,6 +318,10 @@ class App(tk.Tk):
             data_dict[sensor_name] = sensor_data
             data_dict['Time'] = time_data
 
+        # Add Notes to all values
+        notes: str = self.note_frame.get_notes()
+        data_dict["Notes"] = [notes for _ in range(max_length)]
+
         # Ensure all lists in data_dict are of the same length by padding with NaN
         for key in data_dict:
             while len(data_dict[key]) < max_length:
@@ -349,6 +332,9 @@ class App(tk.Tk):
         if file_path:
             result_df.to_csv(file_path, index=False)
             print(f"Data saved to {file_path}")
+
+        # Remove notes frame
+        self.note_frame.destroy()
 
     def get_axes_values(self, sensor: str, limit=None):
         if self.sensor_values.get(sensor):
@@ -384,7 +370,7 @@ class App(tk.Tk):
         clock.pack(fill="both", expand=True)
         self.info_panel_wnum += 1
 
-    def add_control_button(self, text: str, func: Callable, side=None, fill=None, expand=False) -> None:
+    def add_control_button(self, text: str, func: Callable) -> None:
         button = tk.Button(self.control_frame, text=text, command=func)
         button.grid(row=self.button_num, column=0, padx=10, pady=10)
         self.button_num += 1
@@ -406,7 +392,7 @@ class App(tk.Tk):
     def resume_comm(self) -> None:
         self.is_paused = False
 
-    """ UI modification """
+    """ Pop up functions """
 
     def show_sign_in_popup(self):
         self.pause()
@@ -429,6 +415,12 @@ class App(tk.Tk):
         popup.add_button(txt="Upload", func=self.submit_new_user_photo)
         popup.add_button(txt="Cancel", func=popup.close)
         self.edit_photo_popup = popup
+
+    def show_notes_entry(self):
+        title = ui_config.ElementNames.data_notes_label.value
+        self.note_frame = NotesEntryFrame(self.body_frame, title=title)
+        self.note_frame.add_button(text="Save", func=self.save_selected_data)
+        self.note_frame.grid(row=2, column=1, padx=10, pady=10)
 
     """ Control functions """
 
@@ -466,7 +458,7 @@ class App(tk.Tk):
         # Function to visualize
         pass
 
-    def close(self, event=None) -> None:
+    def close(self) -> None:
         self.is_stopped = True
 
     def save_data(self):
@@ -547,17 +539,62 @@ class App(tk.Tk):
                                      row=popup.message_location[0],
                                      col=popup.message_location[1])
 
-    def start_graph_refreshing(self):
-        self.func_ani = FuncAnimation(self.figure, self.update_graph, interval=50, blit=True)  # remember the object
-
     def pause(self):
         self.is_paused = True
+        if not self.is_paused:
+            self.func_ani.pause()
+            self.func_ani.event_source.stop()
         button = self.control_buttons[ui_config.ElementNames.pause_button_txt.value]
         resume_txt: str = ui_config.ElementNames.resume_button_txt.value
         button.config(text=resume_txt, command=self.resume)
 
     def resume(self):
         self.is_paused = False
+        if self.is_paused:
+            self.func_ani.resume()
+            self.func_ani.event_source.start()
         stop_txt: str = ui_config.ElementNames.pause_button_txt.value
         button = self.control_buttons[stop_txt]
         button.config(text=stop_txt, command=self.pause)
+
+    @staticmethod
+    def load_user_data(filepath: str) -> Union[pd.DataFrame, None]:
+        try:
+            data = pd.read_csv(filepath)
+            print(f"CSV data loaded successfully from {filepath}")
+            print(data.head())
+            return data
+        except Exception as e:
+            print(f"Error loading CSV data: {e}")
+            return None
+
+    @staticmethod
+    def process_user_info(user_info):
+        try:
+            birth_date = datetime.datetime.strptime(user_info['Age'], '%m-%d-%Y')
+            age = int((datetime.datetime.now() - birth_date).days / 365.25)
+
+            shoulder_size_map = {'XS': 0, 'S': 1, 'M': 2, 'L': 3, 'XL': 4}
+            size = shoulder_size_map.get(user_info['Shoulder Size'], -1)
+
+            height = float(user_info['Height']) / 100
+            weight = float(user_info['Weight'])
+
+            flexibility = 170  # NEED TO BE CHANGED according to posture_data_collec.py
+
+            features = np.array([age, size, weight, height, flexibility], dtype=float)
+            print(f"Processed user features: {features}")
+            return features
+        except Exception as e:
+            print(f"Error processing user info: {e}")
+            return None
+
+    # @staticmethod
+    # def user_login(user_details):
+    #     global user_features
+    #     user_features = extract_features(user_details)
+    #     print(f"User features loaded: {user_features}")
+    #
+    # def data_received(self, sensor_data):
+    #     data = parse_sensor_data(sensor_data)
+    #     self.detect_anomaly(data)
