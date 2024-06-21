@@ -6,21 +6,19 @@ from datetime import datetime
 import serial
 import re
 from serial_manager import SerialManager
+import os
 
 class PostureDataCollection(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Posture Data Collection")
         self.geometry("400x300")
-
         self.serial_manager = SerialManager()
-
         self.init_ui()
 
     def init_ui(self):
         self.instruction_text = tk.Label(self, text="Pos 1 for 3 sec：\n1. RS+PC\n2. NS+NE\nat（65/70/80cm）")
         self.instruction_text.pack(pady=15)
-
         self.start_button = tk.Button(self, text="Start collecting", command=self.on_start)
         self.start_button.pack(pady=15)
 
@@ -61,9 +59,10 @@ class PostureDataCollection(tk.Tk):
         return None
 
     def save_data(self, data):
-        directory = 'C:\\Users\\icadmin\\PostureResearchProject\\gui\\data\\users\\'
+        directory = os.path.join(os.path.dirname(__file__), 'data', 'users')
+        os.makedirs(directory, exist_ok=True)  # Ensure the directory exists
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")  # Get current date and time
-        filename = directory + f'posture_data_{timestamp}.csv'  # Add timestamp to filename
+        filename = os.path.join(directory, f'posture_data_{timestamp}.csv')  # Add timestamp to filename
         with open(filename, mode='a', newline='') as file:
             writer = csv.writer(file)
             # Only write the header if the file is empty
