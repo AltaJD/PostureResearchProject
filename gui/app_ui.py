@@ -91,7 +91,7 @@ class App(tk.Tk):
         self.add_header_elements(title=ui_config.ElementNames.app_title.value)
         self.add_body_elements()
 
-        # self.model = load_model('model_all.h5')
+        self.model = load_model('model_all.h5')
         self.current_user_id = None
         self.current_user_features = None
         base_path = os.path.dirname(os.path.abspath(__file__))
