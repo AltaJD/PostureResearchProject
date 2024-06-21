@@ -56,7 +56,7 @@ class ThreadManager:
             print("Data Parsing has been stopped")
 
     def parse_data(self, data) -> None:
-        print("=== Data Parsed ===")
+        # print("=== Data Parsed ===")
         # remove everything lower
         new_vals = self.app.sensor_values
         # increase values by one
@@ -79,6 +79,7 @@ def main_test():
     save_txt: str = uc.ElementNames.save_data_button_txt.value
     sign_in_txt: str = uc.ElementNames.sign_in_button_txt.value
     register_txt: str = uc.ElementNames.register_button_txt.value
+    add_notes_txt: str = uc.ElementNames.save_selected_button_txt.value
 
     num_alarms_label: str = uc.ElementNames.alarm_num_label.value
     proc_time_label: str = uc.ElementNames.processing_time_label.value
@@ -88,6 +89,7 @@ def main_test():
     app_ui.add_control_button(text=pause_graph_txt, func=app_ui.pause)
     app_ui.add_control_button(text=close_app_txt, func=test_proc.close_app)
     app_ui.add_control_button(text=save_txt, func=app_ui.save_data)
+    app_ui.add_control_button(text=add_notes_txt, func=app_ui.show_notes_entry)
     app_ui.add_menu_button(text=sign_in_txt, func=app_ui.show_sign_in_popup)
     app_ui.add_menu_button(text=register_txt, func=app_ui.show_register_popup)
     """ Add info panels """
