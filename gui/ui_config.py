@@ -81,6 +81,6 @@ class FilePaths(Enum):
     """ Notes:
     Absolute path for user photos are preferred
     """
-    user_photo_icon = 'gui/data/img/user_photo.jpeg'
-    user_login_db_path = "gui/data/users/logins.csv"
-    values_folder_path = "gui/data/values"
+    user_photo_icon = 'data/img/user_photo.jpeg'
+    user_login_db_path = "data/users/logins.csv"
+    values_folder_path = "data/values"
