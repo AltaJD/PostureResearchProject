@@ -5,6 +5,7 @@ from datetime import timedelta
 from PIL import Image, ImageTk
 import ui_config
 from database_manager import UserDetails
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 class TkCustomImage:
@@ -276,3 +277,47 @@ class NotesEntryFrame(tk.Frame):
 
     def get_notes(self) -> str:
         return self.paragraph_entry.get("1.0", tk.END).strip()
+
+
+class GraphScrollBar(tk.Scrollbar):
+    def __init__(self, parent, options: list[int], figure_func: Callable):
+        super().__init__(parent)
+        self.config(orient=tk.HORIZONTAL)
+        self.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.list_box = self.add_listbox(parent, options)
+        self.config(command=self.list_box.xview)
+        self.bind('<Motion>', self.scroll_callback)
+        self.update_figure_func = figure_func
+
+    def add_listbox(self, parent, options: list[int]):
+        box = tk.Listbox(parent, xscrollcommand=self.set, selectmode=tk.EXTENDED, height=2)
+        item_string = " ".join([str(option) for option in range(len(options))])
+        box.insert(tk.END, item_string)
+        box.config(background='#f0f0f0', bd=0, highlightthickness=0)
+        box.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        return box
+
+    def scroll_callback(self, event=None):
+        # Get the visible range of the Listbox
+        first, last = self.list_box.xview()
+        lower, upper = self.get_visible_range(lower_range=first,
+                                              upper_range=last)
+        self.update_figure_func(event=None, lower_range=lower, upper_range=upper)
+
+    def get_visible_range(self, lower_range: float, upper_range: float) -> tuple:
+        """ The function determine which of the listbox elements are visible for the user
+        and figure to be updated
+        :returns range as a tuple(from_int, to_int)
+        """
+        string_options: str = self.list_box.get(0)
+        options: list[int] = [int(option) for option in string_options.split()]
+        first_el = options[int(lower_range*len(options))]
+        last_el = options[int(upper_range * len(options)) - 1]
+        # print(f"X_first: {lower_range}, X_last: {upper_range}")
+        # print(f"First: {first_el}, Last: {last_el}")
+        return first_el, last_el
+
+    def destroy(self):
+        super().destroy()
+        self.list_box.destroy()
+

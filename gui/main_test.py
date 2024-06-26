@@ -43,6 +43,7 @@ class ThreadManager:
     def close_app(self):
         self.interrupt()
         time.sleep(0.1)
+        self.app.check_memory_usage()
         self.app.destroy()
 
     def connect(self, data=None) -> None:

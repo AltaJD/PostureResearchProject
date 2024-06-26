@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog
-from typing import Callable
+from typing import Callable, Union
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.animation import FuncAnimation
@@ -12,16 +12,16 @@ from custom_widgets import (Clock,
                             UserDetailsWindow,
                             FileUploadWindow,
                             UserRegistrationWindow,
-                            NotesEntryFrame)
+                            NotesEntryFrame,
+                            GraphScrollBar)
 from tensorflow.keras.models import load_model
 import numpy as np
 import os
 import pandas as pd
 from matplotlib.widgets import SpanSelector
 from matplotlib.patches import Rectangle
-from typing import Union
-import sys
-# from serial_manager import SerialManager
+import psutil
+process = psutil.Process()
 
 
 class App(tk.Tk):
@@ -36,7 +36,7 @@ class App(tk.Tk):
         super().__init__()
         # Update app attributes
         self.title(title)
-        self.attributes("-fullscreen", True)
+        # self.attributes("-fullscreen", True)
         self.db_manager = DatabaseManager()
         # Standard variables
         self.sensor_values = dict()
@@ -63,7 +63,7 @@ class App(tk.Tk):
 
         self.alarm_num_label = None
         self.alarm_text_label = None
-        # time selection
+        # Graph
         self.selected_span = None
         self.span_rect = None
         self.span_selector = None
@@ -72,7 +72,9 @@ class App(tk.Tk):
         self.graph_ax = None
         self.figure = None
         self.func_ani = None
-        self.toolbar = None
+        # Graph Scroll Bar elements
+        self.graph_scroll_bar = None
+        self.scroll_bar_frame = None
 
         self.note_frame = None
         self.control_frame = None
@@ -175,21 +177,32 @@ class App(tk.Tk):
     def run_app(self) -> None:
         self.mainloop()
 
-    def update_graph(self, event=None) -> list:
+    def update_graph(self, event=None, lower_range=None, upper_range=None) -> list:
         # Param event is essential for correct update of the graph
         lines = []
-        lim: int = ui_config.Measurements.graph_x_limit.value
-        for i, sens_name in enumerate(self.sensor_values.keys()):
-            x, y = self.get_axes_values(sens_name, limit=lim)
-            self.graph_lines[i].set_data(x, y)
-            self.graph_ax.set_xlim(x[0], x[-1])
-            lines.append(self.graph_lines[i])
+        if upper_range is None:
+            upper_range: int = ui_config.Measurements.graph_x_limit.value
         if self.sensor_values and not self.is_paused:
+            for i, sens_name in enumerate(self.sensor_values.keys()):
+                x, y = self.get_axes_values(sens_name, upper_limit=upper_range,
+                                            lower_limit=lower_range)
+                self.graph_lines[i].set_data(x, y)
+                if x[0] != x[-1]:
+                    self.graph_ax.set_xlim(x[0], x[-1])
+                lines.append(self.graph_lines[i])
             y_min = min((min(y) for y in self.sensor_values.values() if y), default=0)
             y_max = max((max(y) for y in self.sensor_values.values() if y), default=1)
             self.graph_ax.set_ylim(y_min, y_max)
             self.detect_anomaly(self.sensor_values)
-            self.graph_canvas.draw()
+        if lower_range and upper_range:
+            lines = []
+            for i, sens_name in enumerate(self.sensor_values.keys()):
+                x, y = self.get_axes_values(sens_name, upper_limit=upper_range,
+                                            lower_limit=lower_range)
+                self.graph_lines[i].set_data(x, y)
+                self.graph_ax.set_xlim(x[0], x[-1])
+                lines.append(self.graph_lines[i])
+            self.detect_anomaly(self.sensor_values)
         return lines
 
     def update_sensor_values(self, new_data: dict) -> None:
@@ -254,18 +267,13 @@ class App(tk.Tk):
         ax.set_title("Sensors Data")
         lim: int = ui_config.Measurements.graph_x_limit.value
         for sensor_name in sensor_names:
-            x, y = self.get_axes_values(sensor_name, limit=lim)
+            x, y = self.get_axes_values(sensor_name, upper_limit=lim, lower_limit=None)
             line, = ax.plot(x, y, label=sensor_name)
             self.graph_lines.append(line)
         ax.legend()
         canvas = FigureCanvasTkAgg(fig, master=self.graph_frame)
         canvas.draw()
         canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
-
-        # # Add the navigation toolbar FIXME
-        # self.toolbar = NavigationToolbar2Tk(canvas, self.graph_frame)
-        # self.toolbar.update()
-        # canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
         self.graph_canvas = canvas
         self.figure = fig
@@ -336,16 +344,32 @@ class App(tk.Tk):
         # Remove notes frame
         self.note_frame.destroy()
 
-    def get_axes_values(self, sensor: str, limit=None):
-        if self.sensor_values.get(sensor):
-            x = list(range(len(self.sensor_values[sensor])))
-            y = self.sensor_values[sensor]
-            if limit and len(y) > limit:
-                x = x[-limit:]
-                y = y[-limit:]
-        else:
-            x = [0]
-            y = [0]
+    def get_axes_values(self, sensor: str, upper_limit: Union[None, int], lower_limit=None) -> tuple:
+        """
+        Retrieves the x and y values for the specified sensor, with optional upper and lower limits.
+
+        Args:
+            sensor (str): The name of the sensor.
+            upper_limit (Union[None, int]): The upper limit for the number of data points to return. If `None`, all data points are returned.
+            lower_limit (Union[None, int], optional): The lower limit for the number of data points to return. If `None`, the lower limit is set to 0. Defaults to `None`.
+
+        Returns:
+            Tuple[List[int], List[float]]: A tuple containing the x-axis values (list of integers) and the y-axis values (list of floats).
+        """
+        if not self.sensor_values.get(sensor):
+            return [0], [0]
+        x = list(range(len(self.sensor_values[sensor])))
+        y = self.sensor_values[sensor]
+        if upper_limit is None:
+            return x, y
+
+        if upper_limit and len(y) > upper_limit and lower_limit is None:
+            x = x[-upper_limit:]
+            y = y[-upper_limit:]
+            return x, y
+
+        x = x[lower_limit:upper_limit]
+        y = y[lower_limit:upper_limit]
         return x, y
 
     def get_subplot_title(self):
@@ -547,6 +571,12 @@ class App(tk.Tk):
         button = self.control_buttons[ui_config.ElementNames.pause_button_txt.value]
         resume_txt: str = ui_config.ElementNames.resume_button_txt.value
         button.config(text=resume_txt, command=self.resume)
+        # Add scroll bar for the Graph
+        self.scroll_bar_frame = tk.Frame(self.body_frame)
+        self.scroll_bar_frame.grid(row=3, column=1, pady=10, padx=10, sticky=tk.NSEW)
+        self.graph_scroll_bar = GraphScrollBar(parent=self.scroll_bar_frame,
+                                               options=self.sensor_time,
+                                               figure_func=self.update_graph)
 
     def resume(self):
         self.is_paused = False
@@ -556,6 +586,16 @@ class App(tk.Tk):
         stop_txt: str = ui_config.ElementNames.pause_button_txt.value
         button = self.control_buttons[stop_txt]
         button.config(text=stop_txt, command=self.pause)
+        if self.scroll_bar_frame:
+            self.graph_scroll_bar.destroy()
+            self.scroll_bar_frame.destroy()
+
+    @staticmethod
+    def check_memory_usage():
+        global process
+        memory_info = process.memory_info()
+        print(f"Memory usage: {memory_info.rss / (1024 ** 2):.2f} MB (resident set size)")
+        print(f"Memory usage: {memory_info.vms / (1024 ** 2):.2f} MB (virtual memory size)")
 
     @staticmethod
     def load_user_data(filepath: str) -> Union[pd.DataFrame, None]:
