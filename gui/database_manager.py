@@ -4,6 +4,9 @@ import csv
 import datetime
 import bcrypt
 from typing import Union
+from tkinter import filedialog
+from pathlib import Path
+import re
 
 
 class UserDetails:
@@ -42,6 +45,11 @@ class UserDetails:
         return representation
 
     def parse_full_name(self, name: str) -> None:
+        if name == "Unknown":
+            self.first_name = name
+            self.middle_name = ""
+            self.last_name = ""
+            return None
         first, *middle, last = name.split()
         # convert array to a single str
         middle = ''.join(middle)
@@ -91,26 +99,112 @@ class UserDetails:
 
 class SessionInstance:
     user_id: int
-    full_name: str
-    alarm_times: list[str]  # remember the time for alarms detected per session # TODO
-    user_details: Union[UserDetails, None]
+    alarm_times: list[str]
+    user_details: UserDetails
+    session_start_time: datetime.datetime
+    graph_file_path: str
 
     def __init__(self):
-        self.user_id      = -1
-        self.user_details = None
-        self.full_name    = "Unknown"
-        self.alarm_times  = []
+        self.user_id = -1
+        self.user_details = self.get_default_details()
+        self.alarm_times = []
+        self.session_start_time = datetime.datetime.now()
+        self.graph_file_path = self.get_graph_img_path()
 
     def update(self, user_id: int, details: UserDetails):
         """ Remember user details when signed in """
         self.user_id = user_id
         self.user_details = details
-        self.full_name = details.first_name+" "+details.last_name
+        self.graph_file_path = self.get_graph_img_path()
+
+    def get_total_alarm_time(self) -> float:
+        if len(self.alarm_times) == 0:
+            return 0.0
+        # Calculate the time difference in minutes
+        time_format: str = ui_config.Measurements.time_format.value
+        first_time = datetime.datetime.strptime(self.alarm_times[0], time_format)
+        last_time = datetime.datetime.strptime(self.alarm_times[-1], time_format)
+        time_diff = (last_time - first_time).total_seconds() / 60
+        return time_diff
+
+    def get_session_elapsed_time(self) -> str:
+        this_time = datetime.datetime.now()
+        elapsed_time: datetime.timedelta = this_time-self.session_start_time
+        # Convert the elapsed_time to the desired format
+        total_seconds = elapsed_time.total_seconds()
+        hours = int(total_seconds // 3600)
+        minutes = int((total_seconds % 3600) // 60)
+        seconds = int(total_seconds % 60)
+        elapsed_time_str = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        return elapsed_time_str
+
+    def get_graph_img_path(self, relative_path=False) -> str:
+        file_name = "/graph_"+str(self.user_id)+".png"
+        if not relative_path:
+            return ui_config.FilePaths.graph_folder_path.value + file_name
+        path = "/gui/data/img/graphs" + file_name
+        return path
 
     def reset(self):
         """ Reset is used when the user signs out """
         self.user_id = -1
-        self.user_details = None
+        self.user_details = self.get_default_details()
+
+    @staticmethod
+    def get_default_details() -> UserDetails:
+        return UserDetails(full_name="Unknown", new_password='')
+
+
+class ReportWriter:
+
+    path: Union[None, Path]
+    session: SessionInstance
+
+    def __init__(self, session: SessionInstance):
+        self.session = session
+        self.path = None
+
+    def get_stats(self) -> str:
+        content = f"""## User Details:\n
+        | Name | {self.session.user_details.get_full_name()} |
+        | --- | --- |
+        | Alarm Total Time | {self.session.get_total_alarm_time()} |
+        | Elapsed Time | {self.session.get_session_elapsed_time()} |
+        | Age | {self.session.user_details.age} |
+        | Gender | {self.session.user_details.gender} |
+        | Shoulder Size | {self.session.user_details.shoulder_size} |
+        | Weight | {self.session.user_details.weight} |
+        | Height | {self.session.user_details.height} |\n
+        User photo:\n
+        ![User Photo]({self.session.user_details.photo_path})\n
+        """
+        return content
+
+    def get_header(self) -> str:
+        content = f"""# User Report\n
+        The report represents the basics information over the usage of the app\n
+        ## Sensor Readings:\n
+        ![Sensor Values]({self.session.get_graph_img_path(relative_path=True)})\n
+        """
+        return content
+
+    def save_report(self, path=None):
+        """ The function collect all the data from the app
+        and save in the format of .md or .txt
+        If the param path is None, the user may have an opportunity to select the destination
+        """
+        content = self.get_header() + self.get_stats()
+        content = re.sub(r'\n\s+', '\n', content)
+        with open(self.get_path(path), "w", encoding="utf-8") as file:
+            file.write(content)
+
+    def get_path(self, path: Union[None, str]) -> Path:
+        if path is not None:
+            self.path = Path(path)
+            return self.path
+        new_path = filedialog.asksaveasfilename(filetypes=[("Text Files", ["*.txt", "*.md"])])
+        self.path = Path(new_path)
+        return self.path
 
 
 class DatabaseManager:
@@ -121,12 +215,14 @@ class DatabaseManager:
     users_login_path: str
     values_folder: str
     session: SessionInstance
+    report_writer: ReportWriter
 
     def __init__(self):
         self.users_login_path = ui_config.FilePaths.user_login_db_path.value
         self.values_folder = ui_config.FilePaths.values_folder_path.value
-        """ Store user session instance """
+        """ Store other object instances """
         self.session = SessionInstance()
+        self.report_writer = ReportWriter(session=self.session)
 
     def get_user_db(self) -> pd.DataFrame:
         """ The method checks for the existence of the file
@@ -149,8 +245,8 @@ class DatabaseManager:
         if df.shape[0] == 0:
             return df  # return an empty df
         df_condition = (df["First Name"] == details.first_name) \
-                       & (df["Second Name"] == details.last_name) \
-                       & (df["Middle Name"] == details.middle_name)
+                        & (df["Second Name"] == details.last_name) \
+                        & (df["Middle Name"] == details.middle_name)
         df = df[df_condition]
         print(df)
         return df  # return sorted df
@@ -203,25 +299,27 @@ class DatabaseManager:
         df = pd.DataFrame.from_dict(data)
         time_ds = pd.Series(data=time)
         df["Time"] = time_ds
+        """ Save data """
         df.to_csv(path, index=False)
-        print("Total alarm time: ", self.get_total_alarm_time(), " minutes")
+        path = self.get_default_report_path(extension='.md')
+        self.report_writer.save_report(path)  # set path=None, to allow the user for selection of the destination
+        print("Total alarm time: ", self.session.get_total_alarm_time(), " minutes")
         print(f"Data has been saved to {path}")
+        print(f"Report has been saved to {self.report_writer.path.name}")
 
-    def get_total_alarm_time(self) -> float:
-        if len(self.session.alarm_times) == 0:
-            return 0.0
-        # Calculate the time difference in minutes
-        time_format: str = ui_config.Measurements.time_format.value
-        first_time = datetime.datetime.strptime(self.session.alarm_times[0], time_format)
-        last_time = datetime.datetime.strptime(self.session.alarm_times[-1], time_format)
-        time_diff = (last_time - first_time).total_seconds() / 60
-        return time_diff
+    def get_default_report_path(self, extension: str) -> str:
+        return ui_config.FilePaths.reports_folder_path.value + '/report_' + str(self.session.user_id) + extension
 
-    def get_user_photo_path(self) -> str:
-        details: UserDetails = self.session.user_details
-        if details is None:
-            return ""
-        return details.photo_path
+    def get_user_photo_path(self, relative_path=False) -> str:
+        if not relative_path:
+            details: UserDetails = self.session.user_details
+            if details is None:
+                return ""
+            return details.photo_path
+
+    def get_graph_save_path(self) -> str:
+        path = ui_config.FilePaths.graph_folder_path.value + "/graph_" + str(self.session.user_id) + ".png"
+        return path
 
     def save_new_photo_path(self, new_path: str):
         user_id: int = self.session.user_id

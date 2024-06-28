@@ -7,6 +7,7 @@ from app_ui import App
 import time
 import ui_config as uc
 import random
+import psutil
 
 
 class ThreadManager:
@@ -20,6 +21,7 @@ class ThreadManager:
     reading_thread: threading.Thread
 
     def __init__(self, app_title: str):
+        self.process = psutil.Process()
         self.app = App(title=app_title)
         self.reading_thread = threading.Thread(target=self.connect, daemon=True)
         self.time_delay = uc.Measurements.thread_delay.value
@@ -43,7 +45,7 @@ class ThreadManager:
     def close_app(self):
         self.interrupt()
         time.sleep(0.1)
-        self.app.check_memory_usage()
+        self.check_memory_usage()
         self.app.destroy()
 
     def connect(self, data=None) -> None:
@@ -66,6 +68,11 @@ class ThreadManager:
                 some_value: int = random.randint(-30, 30)
                 value.append(some_value)
             self.app.update_sensor_values(new_vals)
+
+    def check_memory_usage(self):
+        memory_info = self.process.memory_info()
+        print(f"Memory usage: {memory_info.rss / (1024 ** 2):.2f} MB (resident set size)")
+        print(f"Memory usage: {memory_info.vms / (1024 ** 2):.2f} MB (virtual memory size)")
 
 
 def main_test():

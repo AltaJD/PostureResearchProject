@@ -46,12 +46,14 @@ The next step will be to continue tuning the model and make deployment attempts.
 ### 21.Interactive graph for error reporting （TODO, Xijun）
 In the first phase, Xijun trained the model using data from static postures. In the second phase, we will test the correctness of the model in monitoring dynamic postures. Reporting wrong prediction of the model is a very important approach to check device accuracy, new data labeling and model retraining.
 Add error reporting: Turn the real time image into an interactive image where the user can click on any point of time/time window on the x-axis. When that point of time (window) is clicked, the local time as well as the posture prediction class is recorded. Save all sensor data, predicted class, and actual class within this time window. The saved data is used to retrain the model. 
-### 22. Dynamic posture data collection scenario. (DONE)
+### 22. Dynamic posture data collection scenario. (TODO)
 Provide users with instructions such as: slowly leaning forwards to the monitor, slowly leaning backwards from the monitor, slowly tilt the body to the left/right, slowly turn the head; and other tasks (typing, reading..) that mimic real-usage scenarios. Move the chair to a specified distance, and repeat the aforementioned actions.
 ### 23. Movement Classification (TODO) 
 Apply a Hidden Markov Model or tangent slope to classify movements as relatively stationary, leaning forward, or leaning backward etc. Rapid and short-term changes in posture will not trigger an alarm. Only relative stationary bad postures will raise an alarm.
 ### 24. Memory Assessment (DONE)
 Small computers such as Raspberry Pi has limited memory space. Therefore, assessment of the memory usage is essential over the testings and optimization processes.
+### 25. Enhanced Graph Monitoring (DONE)
+Allow the selection of the certain range using a scrollbar
 
 ## Installation and Usage
 ### 1. Clone the repository:

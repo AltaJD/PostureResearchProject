@@ -1,3 +1,4 @@
+import os.path
 from enum import Enum
 
 
@@ -81,6 +82,14 @@ class FilePaths(Enum):
     """ Notes:
     Absolute path for user photos are preferred
     """
-    user_photo_icon = 'gui/data/img/user_photo.jpeg'
-    user_login_db_path = "data/users/logins.csv"
-    values_folder_path = "data/values"
+    project_root = os.path.dirname(os.path.abspath(__file__))
+
+    """ Specific file paths """
+    user_photo_icon = project_root + '/data/img/user_photo.jpeg'
+    user_login_db_path = project_root + "/data/users/logins.csv"
+
+    """ Folder paths """
+    values_folder_path = project_root + "/data/values"
+    graph_folder_path = project_root + "/data/img/graphs"
+    reports_folder_path = project_root + "/data/reports"
+

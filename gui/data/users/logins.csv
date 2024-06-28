@@ -1,4 +1,4 @@
 First Name,Second Name,Middle Name,Password,Photo Path,Gender,Age,Shoulder Size,Height,Weight
-Alt,Alt,,$2b$12$2hlsqft1KuADASEYHAyzBeYp6VOnidIhVeP1RgpfHSOG4XYEXhXyW,./data/img/user_photo.jpeg,Male,10-10-2002,XL,100,30
-Test,Test,,$2b$12$UsofZZBNfwAXuRJYyVWope/IiO8MDbHnGfDqUvXP0tX335168Ck5G,./data/img/user_photo.jpeg,Male,10-12-2001,XL,100,30
-XIJUN,SUN,,$2b$12$8hALpuJ46pnRwLCpBzEqcuO3dQR3RO1P7/N3WsuGyoc3ZRLKii7Bu,./data/img/user_photo.jpeg,Female,11-03-1998,M,164,53
+Alt,Alt,,$2b$12$2hlsqft1KuADASEYHAyzBeYp6VOnidIhVeP1RgpfHSOG4XYEXhXyW,C:/Users/Alta_/PycharmProjects/PostureResearchProject/gui/data/img/user_1.png,Male,10-10-2002,XL,100,30
+Test,Test,,$2b$12$UsofZZBNfwAXuRJYyVWope/IiO8MDbHnGfDqUvXP0tX335168Ck5G,nan,Male,10-12-2001,XL,100,30
+XIJUN,SUN,,$2b$12$8hALpuJ46pnRwLCpBzEqcuO3dQR3RO1P7/N3WsuGyoc3ZRLKii7Bu,nan,Female,11-03-1998,M,164,53

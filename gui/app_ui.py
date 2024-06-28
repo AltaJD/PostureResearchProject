@@ -20,8 +20,7 @@ import os
 import pandas as pd
 from matplotlib.widgets import SpanSelector
 from matplotlib.patches import Rectangle
-import psutil
-process = psutil.Process()
+import sys
 
 
 class App(tk.Tk):
@@ -93,7 +92,7 @@ class App(tk.Tk):
         self.add_header_elements(title=ui_config.ElementNames.app_title.value)
         self.add_body_elements()
 
-        self.model = load_model('model_all.h5')
+        # self.model = load_model('model_all.h5')
         self.current_user_id = None
         self.current_user_features = None
         base_path = os.path.dirname(os.path.abspath(__file__))
@@ -486,6 +485,7 @@ class App(tk.Tk):
         self.is_stopped = True
 
     def save_data(self):
+        self.save_graph()
         self.db_manager.save_data(data=self.sensor_values, time=self.sensor_time)
 
     def sign_in(self):
@@ -496,7 +496,7 @@ class App(tk.Tk):
                                       details="Entered details do not match the details in the database")
             return
         pop_up.show_message_frame(subject="Success",
-                                  details=f"Welcome back, {self.db_manager.session.full_name}")
+                                  details=f"Welcome back, {self.db_manager.session.user_details.get_full_name()}")
         self.set_user_photo()
 
         print(f"Checking if file exists at path: {self.csv_path}")
@@ -524,7 +524,7 @@ class App(tk.Tk):
         # Add button
         edit_button_txt = ui_config.ElementNames.edit_photo_button_txt.value
         self.add_menu_button(text=edit_button_txt, func=self.show_edit_photo_popup)
-        self.add_user_name_label(name=self.db_manager.session.full_name,
+        self.add_user_name_label(name=self.db_manager.session.user_details.get_full_name(),
                                  row=self.footer_row,
                                  col=0,
                                  master=self.header_frame)
@@ -565,9 +565,6 @@ class App(tk.Tk):
 
     def pause(self):
         self.is_paused = True
-        if not self.is_paused:
-            self.func_ani.pause()
-            self.func_ani.event_source.stop()
         button = self.control_buttons[ui_config.ElementNames.pause_button_txt.value]
         resume_txt: str = ui_config.ElementNames.resume_button_txt.value
         button.config(text=resume_txt, command=self.resume)
@@ -580,9 +577,6 @@ class App(tk.Tk):
 
     def resume(self):
         self.is_paused = False
-        if self.is_paused:
-            self.func_ani.resume()
-            self.func_ani.event_source.start()
         stop_txt: str = ui_config.ElementNames.pause_button_txt.value
         button = self.control_buttons[stop_txt]
         button.config(text=stop_txt, command=self.pause)
@@ -590,12 +584,10 @@ class App(tk.Tk):
             self.graph_scroll_bar.destroy()
             self.scroll_bar_frame.destroy()
 
-    @staticmethod
-    def check_memory_usage():
-        global process
-        memory_info = process.memory_info()
-        print(f"Memory usage: {memory_info.rss / (1024 ** 2):.2f} MB (resident set size)")
-        print(f"Memory usage: {memory_info.vms / (1024 ** 2):.2f} MB (virtual memory size)")
+    def save_graph(self):
+        file_path = self.db_manager.get_graph_save_path()
+        self.figure.savefig(file_path)
+        print(f"Graph saved to {file_path}")
 
     @staticmethod
     def load_user_data(filepath: str) -> Union[pd.DataFrame, None]:

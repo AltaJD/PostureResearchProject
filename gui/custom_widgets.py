@@ -288,6 +288,7 @@ class GraphScrollBar(tk.Scrollbar):
         self.config(command=self.list_box.xview)
         self.bind('<Motion>', self.scroll_callback)
         self.update_figure_func = figure_func
+        self.move_cursor_end()
 
     def add_listbox(self, parent, options: list[int]):
         box = tk.Listbox(parent, xscrollcommand=self.set, selectmode=tk.EXTENDED, height=2)
@@ -316,6 +317,10 @@ class GraphScrollBar(tk.Scrollbar):
         # print(f"X_first: {lower_range}, X_last: {upper_range}")
         # print(f"First: {first_el}, Last: {last_el}")
         return first_el, last_el
+
+    def move_cursor_end(self):
+        # Scroll to the end of the Listbox
+        self.list_box.xview_moveto(1.0)
 
     def destroy(self):
         super().destroy()

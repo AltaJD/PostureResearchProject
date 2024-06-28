@@ -14,6 +14,4 @@ This allows the user to determine posture dynamics throughout the experiments
 
 ### Note:
 
-1. Please do not clone the entire repository. Please clone particular program as they contain the file paths relative to
-each separate program
-2. The requirements for each of the program will be updated later on
+1. The requirements for each of the program will be updated later on
